@@ -75,7 +75,7 @@ class EventControllerTest {
         // Initialize test data
         User user = new User();
         user.setName("Lakshika");
-        user.setEmail("lakshika@gmail.com");
+        user.setEmail("lakshika1@gmail.com");
         user.setPassword("123");
         user.setRole(Role.USER);
 
@@ -137,7 +137,7 @@ class EventControllerTest {
 //    }
 
     @Test
-    @WithMockUser(username = "lakshika@gmail.com", roles = "USER")
+    @WithMockUser(username = "lakshika1@gmail.com", roles = "USER")
     void createEvent_success() throws Exception {
         EventCreateRequestDto requestDto = new EventCreateRequestDto();
         requestDto.setTitle("Spring Boot Meetup");
@@ -159,7 +159,7 @@ class EventControllerTest {
     }
 
     @Test
-    @WithMockUser(username = "lakshika@gmail.com", roles = "USER")
+    @WithMockUser(username = "lakshika1@gmail.com", roles = "USER")
     void createEvent_validationFails() throws Exception {
         // Arrange
         EventCreateRequestDto requestDto = new EventCreateRequestDto();
@@ -217,7 +217,7 @@ class EventControllerTest {
     }
 
     @Test
-    @WithUserDetails("lakshika@gmail.com")
+    @WithUserDetails("lakshika1@gmail.com")
     void updateEvent_asHost_shouldSucceed() throws Exception {
         EventCreateRequestDto dto = new EventCreateRequestDto();
         dto.setTitle("Updated Event");
@@ -239,7 +239,7 @@ class EventControllerTest {
     }
 
     @Test
-    @WithMockUser(username = "lakshika@gmail.com", roles = "ADMIN")
+    @WithMockUser(username = "lakshika1@gmail.com", roles = "ADMIN")
     void updateEvent_asRoleAdmin_shouldSucceed() throws Exception {
         EventCreateRequestDto dto = new EventCreateRequestDto();
         dto.setTitle("Updated Event");
@@ -283,7 +283,7 @@ class EventControllerTest {
 
 
     @Test
-    @WithUserDetails("lakshika@gmail.com")
+    @WithUserDetails("lakshika1@gmail.com")
     void deleteEvent_asHost_shouldSucceed() throws Exception {
 
         MvcResult mvcResult = mockMvc.perform(patch("/api/v1/events/" + eventId))
@@ -295,7 +295,7 @@ class EventControllerTest {
     }
 
     @Test
-    @WithMockUser(username = "lakshika@gmail.com", roles = "ADMIN")
+    @WithMockUser(username = "lakshika1@gmail.com", roles = "ADMIN")
     void deleteEvent_asRoleAdmin_shouldSucceed() throws Exception {
         MvcResult mvcResult = mockMvc.perform(patch("/api/v1/events/" + eventId))
                 .andExpect(status().isOk())
@@ -317,7 +317,7 @@ class EventControllerTest {
     }
 
     @Test
-    @WithMockUser(username = "lakshika@gmail.com", roles = "USER")
+    @WithMockUser(username = "lakshika1@gmail.com", roles = "USER")
     void getUpcomingEvents_shouldReturnList() throws Exception {
         mockMvc.perform(get("/api/v1/events/upcoming?page=0&size=10"))
                 .andExpect(status().isOk())
@@ -326,7 +326,7 @@ class EventControllerTest {
     }
 
     @Test
-    @WithMockUser(username = "lakshika@gmail.com", roles = "USER")
+    @WithMockUser(username = "lakshika1@gmail.com", roles = "USER")
     void getStatus_shouldReturn200WithCorrectStatus() throws Exception {
         mockMvc.perform(get("/api/v1/events/" + eventId + "/status"))
                 .andExpect(status().isOk())
@@ -334,7 +334,7 @@ class EventControllerTest {
     }
 
     @Test
-    @WithMockUser(username = "lakshika@gmail.com", roles = "USER")
+    @WithMockUser(username = "lakshika1@gmail.com", roles = "USER")
     void getStatus_shouldReturn404WhenEventNotFound() throws Exception {
         UUID invalidId = UUID.randomUUID();
 
@@ -343,7 +343,7 @@ class EventControllerTest {
     }
 
     @Test
-    @WithMockUser(username = "lakshika@gmail.com", roles = "USER")
+    @WithMockUser(username = "lakshika1@gmail.com", roles = "USER")
     void shouldReturnAllHostedAndAttendingEvents() throws Exception {
         mockMvc.perform(get("/api/v1/events/user/{userId}/all", userId))
                 .andExpect(status().isOk())
@@ -353,7 +353,7 @@ class EventControllerTest {
     }
 
     @Test
-    @WithMockUser(username = "lakshika@gmail.com", roles = "USER")
+    @WithMockUser(username = "lakshika1@gmail.com", roles = "USER")
     void getEventWithAttendeeCount_returnsCorrectData() throws Exception {
         mockMvc.perform(get("/api/v1/events/" + event2Id + "/details"))
                 .andExpect(status().isOk())
@@ -362,7 +362,7 @@ class EventControllerTest {
     }
 
     @Test
-    @WithMockJwtUser(username = "lakshika@gmail.com", roles = {"USER"})
+    @WithMockJwtUser(username = "lakshika1@gmail.com", roles = {"USER"})
     void shouldReturnFilteredEvents_ForHostUser_withLocation() throws Exception {
         mockMvc.perform(get("/api/v1/events")
                         .param("location", "Test Location"))
@@ -384,7 +384,7 @@ class EventControllerTest {
     }
 
     @Test
-    @WithMockJwtUser(username = "lakshika@gmail.com", roles = {"USER"})
+    @WithMockJwtUser(username = "lakshika1@gmail.com", roles = {"USER"})
     void shouldReturnFilteredEvents_ForHostUser_withPrivateVisibility() throws Exception {
         mockMvc.perform(get("/api/v1/events")
                         .param("visibility", "PRIVATE"))
@@ -404,7 +404,7 @@ class EventControllerTest {
     }
 
     @Test
-    @WithMockJwtUser(username = "lakshika@gmail.com", roles = {"USER"})
+    @WithMockJwtUser(username = "lakshika1@gmail.com", roles = {"USER"})
     void shouldReturnFilteredEvents_ForHostUser_dateBetweenToday() throws Exception {
         mockMvc.perform(get("/api/v1/events")
                         .param("date", String.valueOf(LocalDate.now(ZoneId.of("UTC")).plusDays(1))))

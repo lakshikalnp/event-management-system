@@ -2,7 +2,6 @@ package com.example.eventmanagement.security;
 
 import com.example.eventmanagement.entity.User;
 import com.example.eventmanagement.service.UserService;
-import com.example.eventmanagement.util.JwtUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -43,7 +42,7 @@ public class JwtRequestFilter extends OncePerRequestFilter {
 
         if (userId != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             User user = userService.getUserById(UUID.fromString(userId));
-            if (jwtUtil.validateToken(jwt, user)) {
+            if (jwtUtil.validateToken(jwt)) {
                 String roleName = user.getRole().name();
                 List<GrantedAuthority> grantedAuthorities = List.of(new SimpleGrantedAuthority(roleName));
                 UsernamePasswordAuthenticationToken authToken =

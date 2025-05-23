@@ -71,7 +71,7 @@ class EventServiceTest {
         // Initialize test data
         User user = new User();
         user.setName("Lakshika");
-        user.setEmail("lakshika@gmail.com");
+        user.setEmail("lakshika1@gmail.com");
         user.setPassword("123");
         user.setRole(Role.USER);
 

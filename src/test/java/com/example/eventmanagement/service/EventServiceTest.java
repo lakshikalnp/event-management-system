@@ -1,36 +1,49 @@
 package com.example.eventmanagement.service;
 
 import com.example.eventmanagement.dto.request.EventCreateRequestDto;
+import com.example.eventmanagement.dto.request.EventFilterRequestDto;
 import com.example.eventmanagement.dto.request.EventUpdateRequestDto;
 import com.example.eventmanagement.dto.response.EventCreateResponseDto;
+import com.example.eventmanagement.dto.response.EventDetailsWithAttendeeCountResponseDto;
+import com.example.eventmanagement.entity.Attendance;
 import com.example.eventmanagement.entity.Event;
 import com.example.eventmanagement.entity.User;
+import com.example.eventmanagement.enumeration.EventStatus;
 import com.example.eventmanagement.enumeration.Role;
+import com.example.eventmanagement.enumeration.Status;
 import com.example.eventmanagement.enumeration.Visibility;
+import com.example.eventmanagement.exception.ResourceNotFoundException;
+import com.example.eventmanagement.repository.AttendanceRepository;
 import com.example.eventmanagement.repository.EventRepository;
 import com.example.eventmanagement.repository.UserRepository;
 import jakarta.transaction.Transactional;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.Page;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.security.test.context.support.WithUserDetails;
 import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.jdbc.Sql;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @SpringBootTest(properties = "spring.profiles.active=test")
 @Transactional
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
+//@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
+@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.ANY)
 class EventServiceTest {
 
     @Autowired
@@ -42,13 +55,18 @@ class EventServiceTest {
     @Autowired
     private EventRepository eventRepository;
 
+    @Autowired
+    private AttendanceRepository attendanceRepository;
+
     private UUID userId;
 
     private User testUser;
 
     private UUID eventId;
 
-    @BeforeEach
+    private UUID event2Id;
+
+    @BeforeAll
      void setup() {
         // Initialize test data
         User user = new User();
@@ -65,14 +83,46 @@ class EventServiceTest {
         event.setTitle("Old Event");
         event.setDescription("Old Description");
         event.setHost(testUser);
-        event.setStartTime(ZonedDateTime.now().plusDays(1));
-        event.setEndTime(ZonedDateTime.now().plusDays(2));
+        event.setStartTime(ZonedDateTime.now().minusDays(3));
+        event.setEndTime(ZonedDateTime.now().minusDays(2));
         event.setLocation("Old Location");
         event.setVisibility(Visibility.PUBLIC);
+        event.setStatus(EventStatus.ACTIVE);
 
-        event = eventRepository.save(event);
+        event = eventRepository.saveAndFlush(event);
         eventId = event.getId();
+
+        // Create a future event
+        Event event2 = new Event();
+        event2.setTitle("Future Event");
+        event2.setDescription("This is a future event.");
+        event2.setStartTime(ZonedDateTime.now().plusDays(1));
+        event2.setEndTime(ZonedDateTime.now().plusDays(2));
+        event2.setLocation("Test Location");
+        event2.setVisibility(Visibility.PRIVATE);
+        event.setHost(testUser);
+        event2.setStatus(EventStatus.ACTIVE);
+        event2.setCreatedAt(ZonedDateTime.now());
+        event2.setUpdatedAt(ZonedDateTime.now());
+        event2.setHost(testUser);
+
+        event2 = eventRepository.save(event2);
+        event2Id = event2.getId();
+
+        Attendance attendance = new Attendance();
+        attendance.setEvent(event2);
+        attendance.setUser(user);
+        attendance.setStatus(Status.GOING);
+        attendance.setRespondedAt(ZonedDateTime.now());
+        attendanceRepository.saveAndFlush(attendance);
     }
+
+//    @AfterEach
+//    void tearDown() {
+//        attendanceRepository.deleteAll();
+//        eventRepository.deleteAll();
+//        userRepository.deleteAll();
+//    }
 
     @Test
     public void testSaveAndFindEvent() {
@@ -119,4 +169,97 @@ class EventServiceTest {
         Assertions.assertEquals("Updated Location", updated.getLocation());
         Assertions.assertEquals("PUBLIC", updated.getVisibility().name());
     }
+
+    @Test
+    void updateEventStatus() {
+
+        EventCreateResponseDto eventCreateResponseDto = eventService.updateEventStatus(eventId, EventStatus.DELETED.name());
+        // Then
+        Assertions.assertEquals(EventStatus.DELETED.name(), eventCreateResponseDto.getStatus());
+    }
+
+    @Test
+    void listUpcomingEvents_returnsExpectedResults() {
+        Page<EventCreateResponseDto> result = eventService.listUpcomingEvents(0, 10);
+
+        assertThat(result.getTotalElements()).isEqualTo(1);
+        assertThat(result.getTotalPages()).isEqualTo(1);
+        assertThat(result.getContent().get(0).getTitle()).isEqualTo("Future Event");
+    }
+
+    @Test
+    void listUpcomingEvents_changedPageSize_returnsExpectedResults() {
+        Page<EventCreateResponseDto> result = eventService.listUpcomingEvents(0, 1);
+
+        assertThat(result.getTotalElements()).isEqualTo(1);
+        assertThat(result.getTotalPages()).isEqualTo(1);
+        assertThat(result.getNumberOfElements()).isEqualTo(1);
+        assertThat(result.getContent().get(0).getTitle()).isEqualTo("Future Event");
+    }
+
+    @Test
+    void statusCheckOfAnEvent_shouldReturnCorrectStatus() {
+        String status = eventService.statusCheckOfAnEvent(eventId);
+        assertThat(status).isEqualTo("ACTIVE");
+    }
+
+    @Test
+    void statusCheckOfAnEvent_shouldThrowIfEventNotFound() {
+        UUID invalidId = UUID.randomUUID();
+        assertThrows(ResourceNotFoundException.class, () -> {
+            eventService.statusCheckOfAnEvent(invalidId);
+        });
+    }
+
+    @Test
+    void shouldReturnHostedAndAttendingEvents() {
+        List<EventCreateResponseDto> events = eventService.getAllEventsForUser(userId);
+        assertThat(events).hasSize(2);
+        assertThat(events).extracting(EventCreateResponseDto::getTitle)
+                .containsExactlyInAnyOrder("Old Event", "Future Event");
+    }
+
+    @Test
+    void testGetEventWithAttendeeCount() {
+        EventDetailsWithAttendeeCountResponseDto result = eventService.getEventWithAttendeeCount(event2Id);
+        assertThat(result.getAttendeeCount()).isEqualTo(1);
+        assertThat(result.getTitle()).isEqualTo("Future Event");
+    }
+
+
+//    @Test
+//    @Sql(statements = {
+//            "INSERT INTO user_details (id, name, email, password, role) VALUES " +
+//                    "('123e4567-e89b-12d3-a456-426614174000', 'Lakshika', 'lakshika.lnp@gmail.com', 'password', 'USER')"
+//    })
+//    @WithUserDetails("lakshika.lnp@gmail.com")
+//    void shouldReturnEventsMatchingLocationFilter() {
+//        EventFilterRequestDto filter = new EventFilterRequestDto(null, null, "Old Location");
+//
+//        List<EventCreateResponseDto> result = eventService.getEventsWithFiltering(filter);
+//
+//        assertThat(result).hasSize(1);
+//        assertThat(result.get(0).getLocation()).isEqualTo("Old Location");
+//    }
+//
+//    @Test
+//    void shouldReturnPublicEventsOnlyWithVisibilityFilter() {
+//        EventFilterRequestDto filter = new EventFilterRequestDto(null, null, "PUBLIC");
+//
+//        List<EventCreateResponseDto> result = eventService.getEventsWithFiltering(filter);
+//
+//        assertThat(result).hasSize(1);
+//        assertThat(result.get(0).getVisibility()).isEqualTo(Visibility.PUBLIC);
+//    }
+//
+//    @Test
+//    void shouldReturnEventsWithinDateRange() {
+//        LocalDate targetDate = ZonedDateTime.now().plusDays(1).toLocalDate();
+//        EventFilterRequestDto filter = new EventFilterRequestDto(targetDate, null, null);
+//
+//        List<EventCreateResponseDto> result = eventService.getEventsWithFiltering(filter);
+//
+//        assertThat(result).hasSize(1);
+//        assertThat(result.get(0).getTitle()).isEqualTo("Public Party");
+//    }
 }

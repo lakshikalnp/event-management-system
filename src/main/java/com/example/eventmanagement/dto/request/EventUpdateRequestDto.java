@@ -3,7 +3,6 @@ import jakarta.validation.constraints.*;
 import lombok.*;
 
 import java.time.ZonedDateTime;
-import java.util.UUID;
 
 
 @NoArgsConstructor
@@ -25,5 +24,7 @@ public class EventUpdateRequestDto {
     private ZonedDateTime endTime;
 
     private String location;
+
+    private String status;
 
 }

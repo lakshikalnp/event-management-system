@@ -1,21 +1,24 @@
 package com.example.eventmanagement.controller;
 
+import com.example.eventmanagement.WithMockJwtUser;
 import com.example.eventmanagement.dto.request.EventCreateRequestDto;
+import com.example.eventmanagement.entity.Attendance;
 import com.example.eventmanagement.entity.Event;
 import com.example.eventmanagement.entity.User;
+import com.example.eventmanagement.enumeration.EventStatus;
 import com.example.eventmanagement.enumeration.Role;
+import com.example.eventmanagement.enumeration.Status;
 import com.example.eventmanagement.enumeration.Visibility;
+import com.example.eventmanagement.repository.AttendanceRepository;
 import com.example.eventmanagement.repository.EventRepository;
 import com.example.eventmanagement.repository.UserRepository;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.transaction.Transactional;
 import org.hamcrest.Matchers;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
@@ -24,21 +27,22 @@ import org.springframework.security.test.context.support.WithUserDetails;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest(properties = "spring.profiles.active=test")
 @Transactional
 @AutoConfigureMockMvc
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.ANY)
 class EventControllerTest {
 
     @Autowired
@@ -53,11 +57,18 @@ class EventControllerTest {
     @Autowired
     private EventRepository eventRepository;
 
+    @Autowired
+    private AttendanceRepository attendanceRepository;
+
     private UUID userId;
 
     private User testUser;
 
     private UUID eventId;
+
+    private UUID user2Id;
+
+    private UUID event2Id;
 
     @BeforeAll
     void setup() {
@@ -81,12 +92,12 @@ class EventControllerTest {
         event.setTitle("Original Event");
         event.setDescription("Original Description");
         event.setHost(testUser);
-        event.setStartTime(ZonedDateTime.now().plusDays(1));
-        event.setEndTime(ZonedDateTime.now().plusDays(2));
+        event.setStartTime(ZonedDateTime.now().minusDays(3));
+        event.setEndTime(ZonedDateTime.now().minusDays(2));
         event.setLocation("Zoom");
         event.setVisibility(Visibility.PUBLIC);
-
-        event = eventRepository.save(event);
+        event.setStatus(EventStatus.ACTIVE);
+        event = eventRepository.saveAndFlush(event);
         eventId = event.getId();
 
          // Create a user who is the event host (someone else)
@@ -95,8 +106,35 @@ class EventControllerTest {
         user2.setEmail("lakshika2@gmail.com");
         user2.setPassword("123");
         user2.setRole(Role.USER);
-        userRepository.saveAndFlush(user2);
+        user2Id = userRepository.saveAndFlush(user2).getId();
+
+        // Create a future event
+        Event event2 = new Event();
+        event2.setTitle("Future Event");
+        event2.setDescription("This is a future event.");
+        event2.setStartTime(ZonedDateTime.now().plusDays(1));
+        event2.setEndTime(ZonedDateTime.now().plusDays(2));
+        event2.setLocation("Test Location");
+        event2.setVisibility(Visibility.PRIVATE);
+        event2.setStatus(EventStatus.ACTIVE);
+        event2.setHost(testUser);
+
+        event2 = eventRepository.saveAndFlush(event2);
+        event2Id = event2.getId();
+
+        Attendance attendance = new Attendance();
+        attendance.setEvent(event2);
+        attendance.setUser(testUser);
+        attendance.setStatus(Status.GOING);
+        attendance.setRespondedAt(ZonedDateTime.now());
+        attendanceRepository.saveAndFlush(attendance);
     }
+
+//    @AfterEach
+//    void tearDown() {
+//        eventRepository.deleteAll();
+//        userRepository.deleteById(user2Id);
+//    }
 
     @Test
     @WithMockUser(username = "lakshika@gmail.com", roles = "USER")
@@ -110,10 +148,14 @@ class EventControllerTest {
         requestDto.setLocation("Virtual");
         requestDto.setVisibility("PUBLIC");
 
-        mockMvc.perform(post("/api/v1/events")
+        MvcResult mvcResult = mockMvc.perform(post("/api/v1/events")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(requestDto))) // ✅ Valid in test
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andReturn();
+
+        String jsonResponse = mvcResult.getResponse().getContentAsString();
+        assertThat(jsonResponse).contains("Event successfully added with id:");
     }
 
     @Test
@@ -147,13 +189,13 @@ class EventControllerTest {
 
         // Assert individual validation messages
         assertThat(errors).contains(
-                "Title must not be blank",
-                "Description must not be blank",
-                "User ID is required",
-                "Start time is required",
-                "End time is required",
-                "Location must not be blank",
-                "Invalid visibility value"
+                "location is required",
+                "visibility must be PUBLIC or PRIVATE",
+                "startTime is required",
+                "endTime is required",
+                "description is required",
+                "userId is required",
+                "title required"
         );
     }
 
@@ -186,12 +228,14 @@ class EventControllerTest {
         dto.setLocation("Google Meet");
         dto.setVisibility("PUBLIC");
 
-        mockMvc.perform(put("/api/v1/events/" + eventId)
+        MvcResult mvcResult = mockMvc.perform(put("/api/v1/events/" + eventId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.title").value("Updated Event"))
-                .andExpect(jsonPath("$.location").value("Google Meet"));
+                .andReturn();
+
+        String jsonResponse = mvcResult.getResponse().getContentAsString();
+        assertThat(jsonResponse).contains("Event successfully updated with id:");
     }
 
     @Test
@@ -206,17 +250,19 @@ class EventControllerTest {
         dto.setLocation("Google Meet");
         dto.setVisibility("PUBLIC");
 
-        mockMvc.perform(put("/api/v1/events/" + eventId)
+        MvcResult mvcResult = mockMvc.perform(put("/api/v1/events/" + eventId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.title").value("Updated Event"))
-                .andExpect(jsonPath("$.location").value("Google Meet"));
+                .andReturn();
+
+        String jsonResponse = mvcResult.getResponse().getContentAsString();
+        assertThat(jsonResponse).contains("Event successfully updated with id:");
     }
 
     @Test
     @WithMockUser(username = "lakshika2@gmail.com", roles = "USER")
-    void updateEvent_asRoleUser_shouldUnAuthorized() throws Exception {
+    void updateEvent_asRoleUser_shouldForbidden() throws Exception {
         EventCreateRequestDto dto = new EventCreateRequestDto();
         dto.setTitle("Updated Event");
         dto.setDescription("Updated Description");
@@ -232,5 +278,137 @@ class EventControllerTest {
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.errorCode").value("ACCESS_DENIED"))
                 .andExpect(jsonPath("$.message").value(Matchers.containsString("You don't have permission to access this resource")));
+    }
+
+
+
+    @Test
+    @WithUserDetails("lakshika@gmail.com")
+    void deleteEvent_asHost_shouldSucceed() throws Exception {
+
+        MvcResult mvcResult = mockMvc.perform(patch("/api/v1/events/" + eventId))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        String jsonResponse = mvcResult.getResponse().getContentAsString();
+        assertThat(jsonResponse).isEqualTo("Event successfully deleted with id: "+eventId);
+    }
+
+    @Test
+    @WithMockUser(username = "lakshika@gmail.com", roles = "ADMIN")
+    void deleteEvent_asRoleAdmin_shouldSucceed() throws Exception {
+        MvcResult mvcResult = mockMvc.perform(patch("/api/v1/events/" + eventId))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        String jsonResponse = mvcResult.getResponse().getContentAsString();
+        assertThat(jsonResponse).isEqualTo("Event successfully deleted with id: "+eventId);
+    }
+
+    @Test
+    @WithMockUser(username = "lakshika2@gmail.com", roles = "USER")
+    void deleteEvent_asRoleUser_shouldForbidden() throws Exception {
+        MvcResult mvcResult = mockMvc.perform(patch("/api/v1/events/" + eventId))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.errorCode").value("ACCESS_DENIED"))
+                .andExpect(jsonPath("$.message").value(Matchers.containsString("You don't have permission to access this resource")))
+                .andReturn();
+
+    }
+
+    @Test
+    @WithMockUser(username = "lakshika@gmail.com", roles = "USER")
+    void getUpcomingEvents_shouldReturnList() throws Exception {
+        mockMvc.perform(get("/api/v1/events/upcoming?page=0&size=10"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.content[0].title").value("Future Event"));
+    }
+
+    @Test
+    @WithMockUser(username = "lakshika@gmail.com", roles = "USER")
+    void getStatus_shouldReturn200WithCorrectStatus() throws Exception {
+        mockMvc.perform(get("/api/v1/events/" + eventId + "/status"))
+                .andExpect(status().isOk())
+                .andExpect(content().string("ACTIVE"));
+    }
+
+    @Test
+    @WithMockUser(username = "lakshika@gmail.com", roles = "USER")
+    void getStatus_shouldReturn404WhenEventNotFound() throws Exception {
+        UUID invalidId = UUID.randomUUID();
+
+        mockMvc.perform(get("/api/v1/events/" + invalidId + "/status"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @WithMockUser(username = "lakshika@gmail.com", roles = "USER")
+    void shouldReturnAllHostedAndAttendingEvents() throws Exception {
+        mockMvc.perform(get("/api/v1/events/user/{userId}/all", userId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$[0].title").exists())
+                .andExpect(jsonPath("$[1].title").exists());
+    }
+
+    @Test
+    @WithMockUser(username = "lakshika@gmail.com", roles = "USER")
+    void getEventWithAttendeeCount_returnsCorrectData() throws Exception {
+        mockMvc.perform(get("/api/v1/events/" + event2Id + "/details"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.title").value("Future Event"))
+                .andExpect(jsonPath("$.attendeeCount").value(1));
+    }
+
+    @Test
+    @WithMockJwtUser(username = "lakshika@gmail.com", roles = {"USER"})
+    void shouldReturnFilteredEvents_ForHostUser_withLocation() throws Exception {
+        mockMvc.perform(get("/api/v1/events")
+                        .param("location", "Test Location"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].title").value("Future Event"))
+                .andExpect(jsonPath("$[0].location").value("Test Location"));
+    }
+
+    @Test
+    @WithMockJwtUser(username = "lakshika3@gmail.com", roles = {"USER"})
+    void shouldReturnFilteredEvents_ForNotHostUser_withPublicVisibility() throws Exception {
+        mockMvc.perform(get("/api/v1/events")
+                        .param("visibility", "PUBLIC"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].title").value("Original Event"))
+                .andExpect(jsonPath("$[0].location").value("Zoom"));
+    }
+
+    @Test
+    @WithMockJwtUser(username = "lakshika@gmail.com", roles = {"USER"})
+    void shouldReturnFilteredEvents_ForHostUser_withPrivateVisibility() throws Exception {
+        mockMvc.perform(get("/api/v1/events")
+                        .param("visibility", "PRIVATE"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].title").value("Future Event"))
+                .andExpect(jsonPath("$[0].location").value("Test Location"));
+    }
+
+    @Test
+    @WithMockJwtUser(username = "lakshika2@gmail.com", roles = {"USER"})
+    void shouldReturnFilteredEvents_ForNotHostUser_withPrivateVisibility() throws Exception {
+        mockMvc.perform(get("/api/v1/events")
+                        .param("visibility", "PRIVATE"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(0));
+    }
+
+    @Test
+    @WithMockJwtUser(username = "lakshika@gmail.com", roles = {"USER"})
+    void shouldReturnFilteredEvents_ForHostUser_dateBetweenToday() throws Exception {
+        mockMvc.perform(get("/api/v1/events")
+                        .param("date", String.valueOf(LocalDate.now(ZoneId.of("UTC")).plusDays(1))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1));
     }
 }

@@ -1,13 +1,10 @@
 package com.example.eventmanagement.dto.response;
 
-
 import com.example.eventmanagement.entity.Event;
-import com.example.eventmanagement.entity.User;
 import com.example.eventmanagement.enumeration.Visibility;
 import com.example.eventmanagement.util.AppConstants;
 import lombok.*;
 
-import java.time.ZonedDateTime;
 import java.util.UUID;
 
 @NoArgsConstructor
@@ -38,6 +35,8 @@ public class EventCreateResponseDto {
 
     private String updatedAt;
 
+    private String status;
+
     public static EventCreateResponseDto eventToDto (Event event) {
         return EventCreateResponseDto.builder()
                 .createdAt(null!=event.getCreatedAt()?event.getCreatedAt().format(AppConstants.DATE_TIME_FORMATTER):null)
@@ -50,6 +49,7 @@ public class EventCreateResponseDto {
                 .location(event.getLocation())
                 .visibility(event.getVisibility())
                 .title(event.getTitle())
+                .status(event.getStatus().name())
                 .build();
     }
 }

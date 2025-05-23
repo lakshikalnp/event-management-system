@@ -1,5 +1,6 @@
 package com.example.eventmanagement.entity;
 
+import com.example.eventmanagement.enumeration.EventStatus;
 import com.example.eventmanagement.enumeration.Visibility;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -23,7 +24,7 @@ public class Event {
     private String description;
 
     @ManyToOne
-    @JoinColumn(name = "host_id", referencedColumnName = "id")
+    @JoinColumn(name = "host_id", referencedColumnName = "id",updatable = false)
     private User host;
 
     private ZonedDateTime startTime;
@@ -34,6 +35,9 @@ public class Event {
 
     @Enumerated(EnumType.STRING)
     private Visibility visibility;
+
+    @Enumerated(EnumType.STRING)
+    private EventStatus status;
 
     private ZonedDateTime createdAt;
 

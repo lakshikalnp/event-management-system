@@ -1,6 +1,5 @@
 package com.example.eventmanagement.service;
 
-import com.example.eventmanagement.entity.Event;
 import com.example.eventmanagement.entity.User;
 import com.example.eventmanagement.repository.UserRepository;
 import jakarta.transaction.Transactional;
@@ -14,7 +13,6 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 @Service

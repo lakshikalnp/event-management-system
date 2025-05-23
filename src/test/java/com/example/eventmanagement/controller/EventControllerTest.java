@@ -217,7 +217,7 @@ class EventControllerTest {
     }
 
     @Test
-    @WithUserDetails("lakshika1@gmail.com")
+    @WithMockJwtUser(username = "lakshika1@gmail.com", roles = {"USER"})
     void updateEvent_asHost_shouldSucceed() throws Exception {
         EventCreateRequestDto dto = new EventCreateRequestDto();
         dto.setTitle("Updated Event");
@@ -261,7 +261,7 @@ class EventControllerTest {
     }
 
     @Test
-    @WithMockUser(username = "lakshika2@gmail.com", roles = "USER")
+    @WithMockJwtUser(username = "lakshika2@gmail.com", roles = {"USER"})
     void updateEvent_asRoleUser_shouldForbidden() throws Exception {
         EventCreateRequestDto dto = new EventCreateRequestDto();
         dto.setTitle("Updated Event");
@@ -283,7 +283,7 @@ class EventControllerTest {
 
 
     @Test
-    @WithUserDetails("lakshika1@gmail.com")
+    @WithMockJwtUser(username = "lakshika1@gmail.com", roles = {"USER"})
     void deleteEvent_asHost_shouldSucceed() throws Exception {
 
         MvcResult mvcResult = mockMvc.perform(patch("/api/v1/events/" + eventId))
@@ -306,7 +306,7 @@ class EventControllerTest {
     }
 
     @Test
-    @WithMockUser(username = "lakshika2@gmail.com", roles = "USER")
+    @WithMockJwtUser(username = "lakshika2@gmail.com", roles = {"USER"})
     void deleteEvent_asRoleUser_shouldForbidden() throws Exception {
         MvcResult mvcResult = mockMvc.perform(patch("/api/v1/events/" + eventId))
                 .andExpect(status().isForbidden())

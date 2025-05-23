@@ -121,12 +121,13 @@ public class EventService {
         log.info("get event with attendee count -> eventId: {}", eventId);
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new ResourceNotFoundException("Event not found with id: " + eventId));
-        long count = attendanceRepository.countAttendeesByEventId(eventId);
+        long count = attendanceRepository.countAttendeesByEventIdAndStatus(eventId);
         log.info("get event with attendee count -> eventId: {}, count: {} success", eventId, count);
         return EventDetailsWithAttendeeCountResponseDto.fromEntity(event, count);
     }
 
     public List<EventCreateResponseDto> getEventsWithFiltering (EventFilterRequestDto filter) {
+        log.info("get event list with filtering -> filter req: {}", filter.toString());
         Specification<Event> spec = Specification
                 .where(EventSpecification.hasLocation(filter.getLocation()))
                 .and(EventSpecification.hasVisibility(filter.getVisibility()))
@@ -134,6 +135,7 @@ public class EventService {
                 .and(EventSpecification.hasAccessToEvent())
                 ;
         List<Event> dataList = eventRepository.findAll(spec);
+        log.info("get event list with filtering -> filter res size: {}", dataList.size());
         return dataList.stream().map(EventCreateResponseDto::eventToDto).toList();
     }
 

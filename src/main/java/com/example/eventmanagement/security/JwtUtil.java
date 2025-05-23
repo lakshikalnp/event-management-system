@@ -1,11 +1,9 @@
 package com.example.eventmanagement.security;
 
-import com.example.eventmanagement.entity.User;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
-import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 import io.jsonwebtoken.io.Decoders;
 import javax.crypto.SecretKey;
@@ -38,20 +36,6 @@ public class JwtUtil {
                 .signWith(key)
                 .compact();
     }
-
-//    public String generateToken(String userId) {
-//        return Jwts.builder()
-//                .setSubject(userId)
-//                .setIssuedAt(new Date())
-//                .setExpiration(new Date(System.currentTimeMillis() + expirationTime))
-//                .signWith(SignatureAlgorithm.HS256, secretKey)
-//                .compact();
-//    }
-
-//    public String extractUserId(String token) {
-//        return Jwts.parser().setSigningKey(secretKey).parseClaimsJws(token)
-//                .getBody().getSubject();
-//    }
 
     public String extractUserId(String token) {
         Claims claims = Jwts.parser()

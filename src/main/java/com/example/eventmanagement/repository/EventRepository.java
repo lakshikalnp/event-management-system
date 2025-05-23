@@ -12,6 +12,7 @@ import org.springframework.stereotype.Repository;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Repository
@@ -23,4 +24,8 @@ public interface EventRepository  extends JpaRepository<Event, UUID>, JpaSpecifi
 
     @Query("SELECT a.event FROM Attendance a WHERE a.user.id = :userId And a.event.status = :eventStatus ")
     List<Event> findAttendingEventsByUserId(@Param("userId") UUID userId, @Param("eventStatus") EventStatus eventStatus);
+
+    Optional<Event> findByIdAndStatus(UUID id, EventStatus status);
+
+//    boolean existsByIdAndHostId(UUID eventId, UUID hostId);
 }

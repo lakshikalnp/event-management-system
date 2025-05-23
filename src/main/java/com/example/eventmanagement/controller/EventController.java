@@ -26,8 +26,19 @@ import java.util.UUID;
 @Slf4j
 public class EventController {
 
-
     private final EventService eventService;
+
+    @GetMapping
+    public ResponseEntity<List<EventCreateResponseDto>> getEventsWithFiltering(
+            @RequestParam(required = false) String location,
+            @RequestParam(required = false) String visibility,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
+    ) {
+        EventFilterRequestDto filter = new EventFilterRequestDto(date, visibility, location);
+        List<EventCreateResponseDto> result = eventService.getEventsWithFiltering(filter);
+
+        return ResponseEntity.ok(result);
+    }
 
     @PostMapping
     public ResponseEntity<String> createEvent(@RequestBody @Valid EventCreateRequestDto requestDto) {
@@ -86,18 +97,6 @@ public class EventController {
     public ResponseEntity<EventDetailsWithAttendeeCountResponseDto> getEventWithAttendees(@PathVariable UUID eventId) {
         log.info("EventController.getEventWithAttendees eventId ->{}", eventId);
         return ResponseEntity.ok(eventService.getEventWithAttendeeCount(eventId));
-    }
-
-    @GetMapping
-    public ResponseEntity<List<EventCreateResponseDto>> getEventsWithFiltering(
-            @RequestParam(required = false) String location,
-            @RequestParam(required = false) String visibility,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
-    ) {
-        EventFilterRequestDto filter = new EventFilterRequestDto(date, visibility, location);
-        List<EventCreateResponseDto> result = eventService.getEventsWithFiltering(filter);
-
-        return ResponseEntity.ok(result);
     }
 
 }

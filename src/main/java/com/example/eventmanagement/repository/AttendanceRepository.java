@@ -10,6 +10,6 @@ import java.util.UUID;
 
 @Repository
 public interface AttendanceRepository extends JpaRepository<Attendance, UUID> {
-    @Query("SELECT COUNT(a) FROM Attendance a WHERE a.event.id = :eventId ")
-    long countAttendeesByEventId(@Param("eventId") UUID eventId);
+    @Query("SELECT COUNT(a) FROM Attendance a WHERE a.event.id = :eventId AND a.status <> 'DECLINED' ")
+    long countAttendeesByEventIdAndStatus(@Param("eventId") UUID eventId);
 }

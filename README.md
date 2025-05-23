@@ -73,4 +73,4 @@ Design and implement a production-ready RESTful API for an Event Management Plat
 
 - Java 17+
 - Maven
-- PostgreSQL (or Docker)
+- PostgreSQL

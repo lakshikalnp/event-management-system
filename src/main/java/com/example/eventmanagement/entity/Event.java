@@ -6,14 +6,13 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.UUID;
 
 @Entity
 @Getter
 @Setter
-public class Event {
+public class Event extends Common {
 
     @Id
     @GeneratedValue
@@ -38,22 +37,5 @@ public class Event {
 
     @Enumerated(EnumType.STRING)
     private EventStatus status;
-
-    private ZonedDateTime createdAt;
-
-    private ZonedDateTime updatedAt;
-
-    @PrePersist
-    public void onCreate() {
-        ZonedDateTime now = ZonedDateTime.now(ZoneOffset.UTC);
-        this.createdAt = now;
-        this.updatedAt = now;
-    }
-
-    @PreUpdate
-    public void onUpdate() {
-        this.updatedAt = ZonedDateTime.now(ZoneOffset.UTC);
-    }
-
 
 }

@@ -1,9 +1,7 @@
 package com.example.eventmanagement.service;
 
 import com.example.eventmanagement.dto.request.AttendanceRequestDto;
-import com.example.eventmanagement.dto.request.EventCreateRequestDto;
 import com.example.eventmanagement.dto.response.AttendanceResponseDto;
-import com.example.eventmanagement.dto.response.EventCreateResponseDto;
 import com.example.eventmanagement.entity.Attendance;
 import com.example.eventmanagement.entity.Event;
 import com.example.eventmanagement.entity.User;

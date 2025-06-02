@@ -5,6 +5,7 @@ import com.example.eventmanagement.enumeration.Visibility;
 import com.example.eventmanagement.util.AppConstants;
 import lombok.*;
 
+import java.io.Serializable;
 import java.util.UUID;
 
 @NoArgsConstructor
@@ -13,7 +14,7 @@ import java.util.UUID;
 @Getter
 @Builder
 @ToString
-public class EventCreateResponseDto {
+public class EventResponseDto implements Serializable {
 
     private UUID id;
 
@@ -37,8 +38,8 @@ public class EventCreateResponseDto {
 
     private String status;
 
-    public static EventCreateResponseDto eventToDto (Event event) {
-        return EventCreateResponseDto.builder()
+    public static EventResponseDto eventToDto (Event event) {
+        return EventResponseDto.builder()
                 .createdAt(null!=event.getCreatedAt()?event.getCreatedAt().format(AppConstants.DATE_TIME_FORMATTER):null)
                 .updatedAt(null!=event.getUpdatedAt()?event.getUpdatedAt().format(AppConstants.DATE_TIME_FORMATTER):null)
                 .startTime(null!=event.getStartTime()?event.getStartTime().format(AppConstants.DATE_TIME_FORMATTER):null)

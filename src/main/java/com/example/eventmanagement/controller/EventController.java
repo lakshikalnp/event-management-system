@@ -3,7 +3,7 @@ package com.example.eventmanagement.controller;
 import com.example.eventmanagement.dto.request.EventCreateRequestDto;
 import com.example.eventmanagement.dto.request.EventFilterRequestDto;
 import com.example.eventmanagement.dto.request.EventUpdateRequestDto;
-import com.example.eventmanagement.dto.response.EventCreateResponseDto;
+import com.example.eventmanagement.dto.response.EventResponseDto;
 import com.example.eventmanagement.dto.response.EventDetailsWithAttendeeCountResponseDto;
 import com.example.eventmanagement.dto.response.ResponseWrapper;
 import com.example.eventmanagement.enumeration.EventStatus;
@@ -30,15 +30,15 @@ public class EventController {
     private final EventService eventService;
 
     @GetMapping
-    public ResponseEntity<ResponseWrapper<List<EventCreateResponseDto>>> getEventsWithFiltering(
+    public ResponseEntity<ResponseWrapper<List<EventResponseDto>>> getEventsWithFiltering(
             @RequestParam(required = false) String location,
             @RequestParam(required = false) String visibility,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
     ) {
         EventFilterRequestDto filter = new EventFilterRequestDto(date, visibility, location);
-        List<EventCreateResponseDto> result = eventService.getEventsWithFiltering(filter);
+        List<EventResponseDto> result = eventService.getEventsWithFiltering(filter);
 
-        ResponseWrapper<List<EventCreateResponseDto>> response = new ResponseWrapper<>(
+        ResponseWrapper<List<EventResponseDto>> response = new ResponseWrapper<>(
                 result,
                 "Successfully fetched",
                 true
@@ -50,7 +50,7 @@ public class EventController {
     @PostMapping
     public ResponseEntity<ResponseWrapper<String>> createEvent(@RequestBody @Valid EventCreateRequestDto requestDto) {
         log.info("EventController.createEvent req->{}", requestDto.toString());
-        EventCreateResponseDto responseDto = eventService.saveEvent(requestDto);
+        EventResponseDto responseDto = eventService.saveEvent(requestDto);
         log.info("EventController.createEvent res->{}", responseDto.toString());
         ResponseWrapper<String> response = new ResponseWrapper<>(
                 null,
@@ -67,7 +67,7 @@ public class EventController {
             @PathVariable UUID eventId,
             @RequestBody @Valid EventUpdateRequestDto requestDto) {
         log.info("EventController.updateEvent req->{}", requestDto.toString());
-        EventCreateResponseDto updated = eventService.updateEvent(eventId, requestDto);
+        eventService.updateEvent(eventId, requestDto);
         log.info("EventController.updateEvent updated successfully eventId: {}",eventId);
         ResponseWrapper<String> response = new ResponseWrapper<>(
                 null,
@@ -95,7 +95,7 @@ public class EventController {
     }
 
     @GetMapping("/upcoming")
-    public ResponseEntity<Page<EventCreateResponseDto>> getUpcomingEvents(
+    public ResponseEntity<Page<EventResponseDto>> getUpcomingEvents(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         log.info("EventController.getUpcomingEvents page ->{}, size ->{}", page, size);
@@ -117,11 +117,11 @@ public class EventController {
     }
 
     @GetMapping("/user/{userId}/all")
-    public ResponseEntity<ResponseWrapper<List<EventCreateResponseDto>>> getAllUserEvents(@PathVariable UUID userId) {
+    public ResponseEntity<ResponseWrapper<List<EventResponseDto>>> getAllUserEvents(@PathVariable UUID userId) {
         log.info("EventController.getAllUserEvents userId ->{}", userId);
-        List<EventCreateResponseDto> events = eventService.getAllEventsForUser(userId);
+        List<EventResponseDto> events = eventService.getAllEventsForUser(userId);
         log.info("EventController.getAllUserEvents events.size ->{}", events.size());
-        ResponseWrapper<List<EventCreateResponseDto>> response = new ResponseWrapper<>(
+        ResponseWrapper<List<EventResponseDto>> response = new ResponseWrapper<>(
                 events,
                 "Successfully fetched",
                 true

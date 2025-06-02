@@ -8,6 +8,8 @@ The application is named `event-management-system` and uses PostgreSQL for persi
 - **JPA:** Enabled automatic DDL generation and uses the PostgreSQL dialect.
 - **JWT Authentication:** Secured with a secret key and tokens expire after 1 hour.
 - **Rate Limiting:** Limits each user/IP to 50 requests per minute to prevent abuse.
+- **caffeine cache:** to improve the performance.
+- **security key loads from .env file:** to avoid key leakage.
 
 ## Default Users Initialization
 During application startup, two default users are automatically created for testing and development purposes.

@@ -65,8 +65,6 @@ class EventControllerTest {
 
     private UUID eventId;
 
-    private UUID user2Id;
-
     private UUID event2Id;
 
     @BeforeAll
@@ -105,7 +103,7 @@ class EventControllerTest {
         user2.setEmail("lakshika2@gmail.com");
         user2.setPassword("123");
         user2.setRole(Role.USER);
-        user2Id = userRepository.saveAndFlush(user2).getId();
+        userRepository.saveAndFlush(user2);
 
         // Create a future event
         Event event2 = new Event();
@@ -144,7 +142,7 @@ class EventControllerTest {
         MvcResult mvcResult = mockMvc.perform(post("/api/v1/events")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(requestDto)))
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
                 .andReturn();
 
         String jsonResponse = mvcResult.getResponse().getContentAsString();
@@ -173,12 +171,12 @@ class EventControllerTest {
 
         String jsonResponse = mvcResult.getResponse().getContentAsString();
 
-        // Debug/log the raw response if needed
+
         System.out.println("Validation Response: " + jsonResponse);
 
-        // Deserialize JSON to a map or list depending on your error structure
+        // Deserialize JSON to a map
         Map<String, Object> errorMap = objectMapper.readValue(jsonResponse, new TypeReference<>() {});
-        List<String> errors = (List<String>) errorMap.get("errors");  // adjust key as per your error structure
+        List<String> errors = (List<String>) errorMap.get("errors");
 
         // Assert individual validation messages
         assertThat(errors).contains(

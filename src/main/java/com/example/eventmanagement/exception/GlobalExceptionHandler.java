@@ -13,9 +13,8 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
-import static com.example.eventmanagement.util.AppConstants.EXCEPTION_OCCURED;
+import static com.example.eventmanagement.util.AppConstants.*;
 
 @RestControllerAdvice
 @Slf4j
@@ -30,42 +29,51 @@ public class GlobalExceptionHandler {
         Map<String, Object> response = new HashMap<>();
         response.put("status", HttpStatus.BAD_REQUEST.value());
         response.put("errors", errors);
-        log.error(EXCEPTION_OCCURED, ex);
+        log.error(EXCEPTION_OCCURRED, ex);
 
         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ErrorResponse> handleAccessDenied(AccessDeniedException ex) {
-        log.error(EXCEPTION_OCCURED, ex);
+        log.error(EXCEPTION_OCCURRED, ex);
 
         return ResponseEntity
                 .status(HttpStatus.FORBIDDEN)
-                .body(new ErrorResponse("ACCESS_DENIED", "You don't have permission to access this resource"));
+                .body(new ErrorResponse(ACCESS_DENIED_ERROR_CODE, "You don't have permission to access this resource"));
     }
 
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleNotFound(ResourceNotFoundException ex) {
-        log.error(EXCEPTION_OCCURED, ex);
+        log.error(EXCEPTION_OCCURRED, ex);
 
-        ErrorResponse error = new ErrorResponse("RESOURCE_NOT_FOUND", ex.getMessage());
+        ErrorResponse error = new ErrorResponse(RESOURCE_NOT_FOUND_ERROR_CODE, ex.getMessage());
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
     }
 
      @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<ErrorResponse> handleBadCredentials(BadCredentialsException ex) {
-        log.error(EXCEPTION_OCCURED, ex);
+        log.error(EXCEPTION_OCCURRED, ex);
         return ResponseEntity
                 .status(HttpStatus.UNAUTHORIZED)
-                .body(new ErrorResponse("UNAUTHORIZED", "Invalid credentials: " + ex.getMessage()));
+                .body(new ErrorResponse(UN_AUTHORIZED_ERROR_CODE, "Invalid credentials: " + ex.getMessage()));
+    }
+
+
+    @ExceptionHandler(UnAuthorizedException.class)
+    public ResponseEntity<ErrorResponse> handleUnAuthorized(UnAuthorizedException ex) {
+        log.error(EXCEPTION_OCCURRED, ex);
+        return ResponseEntity
+                .status(HttpStatus.UNAUTHORIZED)
+                .body(new ErrorResponse(UN_AUTHORIZED_ERROR_CODE, "Un authorized: " + ex.getMessage()));
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleOtherExceptions(Exception ex) {
-        log.error(EXCEPTION_OCCURED, ex);
+        log.error(EXCEPTION_OCCURRED, ex);
 
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(new ErrorResponse("INTERNAL_ERROR", ex.getMessage()));
+                .body(new ErrorResponse(INTERNAL_ERROR_CODE, ex.getMessage()));
     }
 }

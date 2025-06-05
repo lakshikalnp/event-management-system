@@ -22,7 +22,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
-import static com.example.eventmanagement.util.AppConstants.SUCCESSFULLY_FETCHED;
+import static com.example.eventmanagement.util.AppConstants.*;
 
 @RestController
 @RequestMapping("/api/v1/events")
@@ -57,7 +57,7 @@ public class EventController {
         log.info("EventController.createEvent res->{}", responseDto.toString());
         ResponseWrapper<String> response = new ResponseWrapper<>(
                 null,
-                "Event successfully added with id: "+responseDto.getId(),
+                SUCCESSFULLY_CREATED_AN_EVENT+responseDto.getId(),
                 true
         );
 
@@ -74,7 +74,7 @@ public class EventController {
         log.info("EventController.updateEvent updated successfully eventId: {}",eventId);
         ResponseWrapper<String> response = new ResponseWrapper<>(
                 null,
-                "Event successfully updated with id: "+eventId,
+                SUCCESSFULLY_UPDATED_AN_EVENT+eventId,
                 true
         );
 
@@ -90,7 +90,7 @@ public class EventController {
         log.info("EventController.deleteEvent eventId ->{} success", eventId);
         ResponseWrapper<String> response = new ResponseWrapper<>(
                 null,
-                "Event successfully deleted with id: "+eventId,
+                SUCCESSFULLY_DELETED_AN_EVENT+eventId,
                 true
         );
 

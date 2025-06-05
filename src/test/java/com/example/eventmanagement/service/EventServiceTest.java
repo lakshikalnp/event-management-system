@@ -36,7 +36,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 @SpringBootTest(properties = "spring.profiles.active=test")
 @Transactional
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-//@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.ANY)
 class EventServiceTest {
 

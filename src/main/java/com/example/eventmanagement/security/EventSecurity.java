@@ -3,8 +3,8 @@ package com.example.eventmanagement.security;
 import com.example.eventmanagement.entity.User;
 import com.example.eventmanagement.repository.EventRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
+
 import java.util.UUID;
 
 @Component("eventSecurity")

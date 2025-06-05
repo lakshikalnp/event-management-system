@@ -29,6 +29,8 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.*;
 
+import static com.example.eventmanagement.util.AppConstants.NOT_FOUND_EVENT;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -86,7 +88,7 @@ public class EventService {
         log.info("Updating event status with ID: {} , Status: {}", eventId, newStatus);
         Optional<Event> optionalEvent = eventRepository.findById(eventId);
 
-        Event event = optionalEvent.orElseThrow(() -> new ResourceNotFoundException("Event not found with id: " + eventId));
+        Event event = optionalEvent.orElseThrow(() -> new ResourceNotFoundException(NOT_FOUND_EVENT + eventId));
         event.setStatus(EventStatus.valueOf(newStatus));
         event = eventRepository.saveAndFlush(event);
         log.info("Updating event status with ID: {} , Status: {} success", eventId, newStatus);
@@ -104,7 +106,7 @@ public class EventService {
 
     public String statusCheckOfAnEvent(UUID eventId) {
         log.info("Check status of an event eventId: {}", eventId);
-        Event event = eventRepository.findById(eventId).orElseThrow(() -> new ResourceNotFoundException("Event not found with id: " + eventId));
+        Event event = eventRepository.findById(eventId).orElseThrow(() -> new ResourceNotFoundException(NOT_FOUND_EVENT+ eventId));
         log.info("Check status of an event status: {} success", event.getStatus().name());
         return event.getStatus().name();
     }
@@ -127,7 +129,7 @@ public class EventService {
     public EventDetailsWithAttendeeCountResponseDto getEventWithAttendeeCount(UUID eventId) {
         log.info("get event with attendee count -> eventId: {}", eventId);
         Event event = eventRepository.findById(eventId)
-                .orElseThrow(() -> new ResourceNotFoundException("Event not found with id: " + eventId));
+                .orElseThrow(() -> new ResourceNotFoundException(NOT_FOUND_EVENT + eventId));
         long count = attendanceRepository.countAttendeesByEventIdAndStatus(eventId);
         log.info("get event with attendee count -> eventId: {}, count: {} success", eventId, count);
         return EventDetailsWithAttendeeCountResponseDto.fromEntity(event, count);

@@ -15,6 +15,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static com.example.eventmanagement.util.AppConstants.EXCEPTION_OCCURED;
+
 @RestControllerAdvice
 @Slf4j
 public class GlobalExceptionHandler {
@@ -23,19 +25,19 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String, Object>> handleValidationExceptions(MethodArgumentNotValidException ex) {
         List<String> errors = ex.getBindingResult().getFieldErrors().stream()
                 .map(error -> error.getField() + " " + error.getDefaultMessage())
-                .collect(Collectors.toList());
+                .toList();
 
         Map<String, Object> response = new HashMap<>();
         response.put("status", HttpStatus.BAD_REQUEST.value());
         response.put("errors", errors);
-        log.error("Exception occurred: ", ex);
+        log.error(EXCEPTION_OCCURED, ex);
 
         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ErrorResponse> handleAccessDenied(AccessDeniedException ex) {
-        log.error("Exception occurred: ", ex);
+        log.error(EXCEPTION_OCCURED, ex);
 
         return ResponseEntity
                 .status(HttpStatus.FORBIDDEN)
@@ -44,7 +46,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleNotFound(ResourceNotFoundException ex) {
-        log.error("Exception occurred: ", ex);
+        log.error(EXCEPTION_OCCURED, ex);
 
         ErrorResponse error = new ErrorResponse("RESOURCE_NOT_FOUND", ex.getMessage());
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
@@ -52,7 +54,7 @@ public class GlobalExceptionHandler {
 
      @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<ErrorResponse> handleBadCredentials(BadCredentialsException ex) {
-        log.error("Exception occurred: ", ex);
+        log.error(EXCEPTION_OCCURED, ex);
         return ResponseEntity
                 .status(HttpStatus.UNAUTHORIZED)
                 .body(new ErrorResponse("UNAUTHORIZED", "Invalid credentials: " + ex.getMessage()));
@@ -60,7 +62,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleOtherExceptions(Exception ex) {
-        log.error("Exception occurred: ", ex);
+        log.error(EXCEPTION_OCCURED, ex);
 
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)

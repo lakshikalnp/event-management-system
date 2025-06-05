@@ -13,6 +13,8 @@ import java.time.ZonedDateTime;
 
 public class EventSpecification {
 
+    private EventSpecification () {}
+
     public static Specification<Event> hasLocation(String location) {
         return (root, query, cb) -> {
             if (location == null || location.isBlank()) return null;

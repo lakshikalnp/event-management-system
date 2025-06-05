@@ -22,6 +22,8 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
+import static com.example.eventmanagement.util.AppConstants.SUCCESSFULLY_FETCHED;
+
 @RestController
 @RequestMapping("/api/v1/events")
 @RequiredArgsConstructor
@@ -41,7 +43,7 @@ public class EventController {
 
         ResponseWrapper<List<EventResponseDto>> response = new ResponseWrapper<>(
                 result,
-                "Successfully fetched",
+                SUCCESSFULLY_FETCHED,
                 true
         );
 
@@ -110,7 +112,7 @@ public class EventController {
         log.info("EventController.getStatus eventId ->{}, status ->{}", eventId, status);
         ResponseWrapper<String> response = new ResponseWrapper<>(
                 status,
-                "Successfully fetched",
+                SUCCESSFULLY_FETCHED,
                 true
         );
 
@@ -124,7 +126,7 @@ public class EventController {
         log.info("EventController.getAllUserEvents events.size ->{}", events.size());
         ResponseWrapper<List<EventResponseDto>> response = new ResponseWrapper<>(
                 events,
-                "Successfully fetched",
+                SUCCESSFULLY_FETCHED,
                 true
         );
 
@@ -137,7 +139,7 @@ public class EventController {
         EventDetailsWithAttendeeCountResponseDto eventWithAttendeeCount = eventService.getEventWithAttendeeCount(eventId);
         ResponseWrapper<EventDetailsWithAttendeeCountResponseDto> response = new ResponseWrapper<>(
                 eventWithAttendeeCount,
-                "Successfully fetched",
+                SUCCESSFULLY_FETCHED,
                 true
         );
 

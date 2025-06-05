@@ -8,6 +8,7 @@ class EventManagementSystemApplicationTests {
 
 	@Test
 	void contextLoads() {
+		System.out.println("test is running");
 	}
 
 }

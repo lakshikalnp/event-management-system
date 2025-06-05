@@ -129,12 +129,6 @@ class EventControllerTest {
         attendanceRepository.saveAndFlush(attendance);
     }
 
-//    @AfterEach
-//    void tearDown() {
-//        eventRepository.deleteAll();
-//        userRepository.deleteById(user2Id);
-//    }
-
     @Test
     @WithMockUser(username = "lakshika1@gmail.com", roles = "USER")
     void createEvent_success() throws Exception {
@@ -292,8 +286,6 @@ class EventControllerTest {
 
         String jsonResponse = mvcResult.getResponse().getContentAsString();
 
-        // Parse the response as a Map
-        ObjectMapper objectMapper = new ObjectMapper();
         Map<String, Object> responseMap = objectMapper.readValue(jsonResponse, new TypeReference<>() {});
 
         String actualMessage = (String) responseMap.get("message");
@@ -312,8 +304,6 @@ class EventControllerTest {
 
         String jsonResponse = mvcResult.getResponse().getContentAsString();
 
-        // Parse the response as a Map
-        ObjectMapper objectMapper = new ObjectMapper();
         Map<String, Object> responseMap = objectMapper.readValue(jsonResponse, new TypeReference<>() {});
 
         String actualMessage = (String) responseMap.get("message");
@@ -325,7 +315,7 @@ class EventControllerTest {
     @Test
     @WithMockJwtUser(username = "lakshika2@gmail.com", roles = {"USER"})
     void deleteEvent_asRoleUser_shouldForbidden() throws Exception {
-        MvcResult mvcResult = mockMvc.perform(patch("/api/v1/events/" + eventId))
+        mockMvc.perform(patch("/api/v1/events/" + eventId))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.errorCode").value("ACCESS_DENIED"))
                 .andExpect(jsonPath("$.message").value(Matchers.containsString("You don't have permission to access this resource")))

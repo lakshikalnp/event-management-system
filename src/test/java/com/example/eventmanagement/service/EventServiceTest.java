@@ -114,7 +114,7 @@ class EventServiceTest {
     }
 
     @Test
-    public void testSaveAndFindEvent() {
+    void testSaveAndFindEvent() {
        userRepository.findById(userId);
 
         // Create and save eventCreateRequestDto

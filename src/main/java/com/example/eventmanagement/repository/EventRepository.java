@@ -26,6 +26,4 @@ public interface EventRepository  extends JpaRepository<Event, UUID>, JpaSpecifi
     List<Event> findAttendingEventsByUserId(@Param("userId") UUID userId, @Param("eventStatus") EventStatus eventStatus);
 
     Optional<Event> findByIdAndStatus(UUID id, EventStatus status);
-
-//    boolean existsByIdAndHostId(UUID eventId, UUID hostId);
 }

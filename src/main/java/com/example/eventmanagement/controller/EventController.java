@@ -60,7 +60,7 @@ public class EventController {
     public ResponseEntity<ResponseWrapper<String>> updateEvent(
             @PathVariable UUID eventId,
             @RequestBody @Valid EventUpdateRequestDto requestDto) {
-        log.info("EventController.updateEvent req->{}", requestDto.toString());
+        log.info("EventController.updateEvent req ->{}", requestDto.toString());
         eventService.updateEvent(eventId, requestDto);
         log.info("EventController.updateEvent updated successfully eventId: {}",eventId);
         ResponseWrapper<String> response = ResponseWrapper.success(null,  SUCCESSFULLY_UPDATED_AN_EVENT+eventId);

@@ -174,9 +174,13 @@ class EventControllerTest {
 
         System.out.println("Validation Response: " + jsonResponse);
 
-        // Deserialize JSON to a map
-        Map<String, Object> errorMap = objectMapper.readValue(jsonResponse, new TypeReference<>() {});
-        List<String> errors = (List<String>) errorMap.get("errors");
+        // Deserialize to get nested "errors" list
+        Map<String, Object> responseWrapper = objectMapper.readValue(jsonResponse, new TypeReference<>() {});
+        Map<String, Object> data = (Map<String, Object>) responseWrapper.get("data");
+
+        assertThat(data).isNotNull();  // 🔒 ensure it's not null
+
+        List<String> errors = (List<String>) data.get("errors");
 
         // Assert individual validation messages
         assertThat(errors).contains(
@@ -326,8 +330,8 @@ class EventControllerTest {
     void getUpcomingEvents_shouldReturnList() throws Exception {
         mockMvc.perform(get("/api/v1/events/upcoming?page=0&size=10"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content").isArray())
-                .andExpect(jsonPath("$.content[0].title").value("Future Event"));
+                .andExpect(jsonPath("$.data.content").isArray())
+                .andExpect(jsonPath("$.data.content[0].title").value("Future Event"));
     }
 
     @Test

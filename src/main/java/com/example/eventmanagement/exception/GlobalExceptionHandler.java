@@ -1,6 +1,7 @@
 package com.example.eventmanagement.exception;
 
 import com.example.eventmanagement.dto.request.ErrorResponse;
+import com.example.eventmanagement.dto.response.ResponseWrapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,7 +22,7 @@ import static com.example.eventmanagement.util.AppConstants.*;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<Map<String, Object>> handleValidationExceptions(MethodArgumentNotValidException ex) {
+    public ResponseEntity<ResponseWrapper<Map<String, Object>>> handleValidationExceptions(MethodArgumentNotValidException ex) {
         List<String> errors = ex.getBindingResult().getFieldErrors().stream()
                 .map(error -> error.getField() + " " + error.getDefaultMessage())
                 .toList();
@@ -29,51 +30,58 @@ public class GlobalExceptionHandler {
         Map<String, Object> response = new HashMap<>();
         response.put("status", HttpStatus.BAD_REQUEST.value());
         response.put("errors", errors);
-        log.error(EXCEPTION_OCCURRED, ex);
 
-        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+        log.error(EXCEPTION_OCCURRED, ex);
+        ResponseWrapper<Map<String, Object>> responseWrapper = ResponseWrapper.failure(response,VALIDATION_FAILURE_CODE,null);
+        return new ResponseEntity<>(responseWrapper, HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(AccessDeniedException.class)
-    public ResponseEntity<ErrorResponse> handleAccessDenied(AccessDeniedException ex) {
+    public ResponseEntity<ResponseWrapper<String>> handleAccessDenied(AccessDeniedException ex) {
         log.error(EXCEPTION_OCCURRED, ex);
 
         return ResponseEntity
                 .status(HttpStatus.FORBIDDEN)
-                .body(new ErrorResponse(ACCESS_DENIED_ERROR_CODE, "You don't have permission to access this resource"));
+                .body(ResponseWrapper.failure(null,ACCESS_DENIED_ERROR_CODE,"You don't have permission to access this resource"));
     }
 
     @ExceptionHandler(ResourceNotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleNotFound(ResourceNotFoundException ex) {
+    public ResponseEntity<ResponseWrapper<String>> handleNotFound(ResourceNotFoundException ex) {
         log.error(EXCEPTION_OCCURRED, ex);
 
-        ErrorResponse error = new ErrorResponse(RESOURCE_NOT_FOUND_ERROR_CODE, ex.getMessage());
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(ResponseWrapper.failure(null,RESOURCE_NOT_FOUND_ERROR_CODE, ex.getMessage()));
     }
 
      @ExceptionHandler(BadCredentialsException.class)
-    public ResponseEntity<ErrorResponse> handleBadCredentials(BadCredentialsException ex) {
+    public ResponseEntity<ResponseWrapper<String>> handleBadCredentials(BadCredentialsException ex) {
         log.error(EXCEPTION_OCCURRED, ex);
-        return ResponseEntity
-                .status(HttpStatus.UNAUTHORIZED)
-                .body(new ErrorResponse(UN_AUTHORIZED_ERROR_CODE, "Invalid credentials: " + ex.getMessage()));
+
+         return ResponseEntity
+                 .status(HttpStatus.FORBIDDEN)
+                 .body(ResponseWrapper.failure(null,UN_AUTHORIZED_ERROR_CODE, "Invalid credentials: " + ex.getMessage()));
+
     }
 
 
     @ExceptionHandler(UnAuthorizedException.class)
-    public ResponseEntity<ErrorResponse> handleUnAuthorized(UnAuthorizedException ex) {
+    public ResponseEntity<ResponseWrapper<String>> handleUnAuthorized(UnAuthorizedException ex) {
         log.error(EXCEPTION_OCCURRED, ex);
+
         return ResponseEntity
-                .status(HttpStatus.UNAUTHORIZED)
-                .body(new ErrorResponse(UN_AUTHORIZED_ERROR_CODE, "Un authorized: " + ex.getMessage()));
+                .status(HttpStatus.FORBIDDEN)
+                .body(ResponseWrapper.failure(null, UN_AUTHORIZED_ERROR_CODE, "Un authorized: " + ex.getMessage()));
+
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse> handleOtherExceptions(Exception ex) {
+    public ResponseEntity<ResponseWrapper<String>> handleOtherExceptions(Exception ex) {
         log.error(EXCEPTION_OCCURRED, ex);
 
         return ResponseEntity
-                .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(new ErrorResponse(INTERNAL_ERROR_CODE, ex.getMessage()));
+                .status(HttpStatus.FORBIDDEN)
+                .body(ResponseWrapper.failure(null, INTERNAL_ERROR_CODE, "Internal Server Error. Please try again later."));
+
     }
 }

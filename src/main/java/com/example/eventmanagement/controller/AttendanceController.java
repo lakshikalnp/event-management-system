@@ -31,11 +31,7 @@ public class AttendanceController {
 
         log.info("AttendanceController.recordAttendance success");
 
-        ResponseWrapper<String> response = new ResponseWrapper<>(
-                null,
-                responseMessage,
-                true
-        );
+        ResponseWrapper<String> response = ResponseWrapper.success(null, responseMessage);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }

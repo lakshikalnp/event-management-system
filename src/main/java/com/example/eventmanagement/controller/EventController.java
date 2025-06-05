@@ -41,12 +41,7 @@ public class EventController {
         EventFilterRequestDto filter = new EventFilterRequestDto(date, visibility, location);
         List<EventResponseDto> result = eventService.getEventsWithFiltering(filter);
 
-        ResponseWrapper<List<EventResponseDto>> response = new ResponseWrapper<>(
-                result,
-                SUCCESSFULLY_FETCHED,
-                true
-        );
-
+        ResponseWrapper<List<EventResponseDto>> response = ResponseWrapper.success(result,  SUCCESSFULLY_FETCHED);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
@@ -55,11 +50,7 @@ public class EventController {
         log.info("EventController.createEvent req->{}", requestDto.toString());
         EventResponseDto responseDto = eventService.saveEvent(requestDto);
         log.info("EventController.createEvent res->{}", responseDto.toString());
-        ResponseWrapper<String> response = new ResponseWrapper<>(
-                null,
-                SUCCESSFULLY_CREATED_AN_EVENT+responseDto.getId(),
-                true
-        );
+        ResponseWrapper<String> response = ResponseWrapper.success(null,  SUCCESSFULLY_CREATED_AN_EVENT+responseDto.getId());
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
@@ -72,11 +63,7 @@ public class EventController {
         log.info("EventController.updateEvent req->{}", requestDto.toString());
         eventService.updateEvent(eventId, requestDto);
         log.info("EventController.updateEvent updated successfully eventId: {}",eventId);
-        ResponseWrapper<String> response = new ResponseWrapper<>(
-                null,
-                SUCCESSFULLY_UPDATED_AN_EVENT+eventId,
-                true
-        );
+        ResponseWrapper<String> response = ResponseWrapper.success(null,  SUCCESSFULLY_UPDATED_AN_EVENT+eventId);
 
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
@@ -88,21 +75,17 @@ public class EventController {
         log.info("EventController.deleteEvent eventId ->{}", eventId);
         eventService.updateEventStatus(eventId, EventStatus.DELETED.name());
         log.info("EventController.deleteEvent eventId ->{} success", eventId);
-        ResponseWrapper<String> response = new ResponseWrapper<>(
-                null,
-                SUCCESSFULLY_DELETED_AN_EVENT+eventId,
-                true
-        );
+        ResponseWrapper<String> response = ResponseWrapper.success(null, SUCCESSFULLY_DELETED_AN_EVENT+eventId);
 
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
     @GetMapping("/upcoming")
-    public ResponseEntity<Page<EventResponseDto>> getUpcomingEvents(
+    public ResponseEntity<ResponseWrapper<Page<EventResponseDto>>> getUpcomingEvents(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         log.info("EventController.getUpcomingEvents page ->{}, size ->{}", page, size);
-        return ResponseEntity.ok(eventService.listUpcomingEvents(page, size));
+        return ResponseEntity.ok(ResponseWrapper.success(eventService.listUpcomingEvents(page, size), SUCCESSFULLY_FETCHED));
     }
 
     @GetMapping("/{eventId}/status")
@@ -110,12 +93,7 @@ public class EventController {
         log.info("EventController.getStatus eventId ->{}", eventId);
         String status = eventService.statusCheckOfAnEvent(eventId);
         log.info("EventController.getStatus eventId ->{}, status ->{}", eventId, status);
-        ResponseWrapper<String> response = new ResponseWrapper<>(
-                status,
-                SUCCESSFULLY_FETCHED,
-                true
-        );
-
+        ResponseWrapper<String> response = ResponseWrapper.success(status, SUCCESSFULLY_FETCHED);
         return ResponseEntity.ok(response);
     }
 
@@ -124,11 +102,7 @@ public class EventController {
         log.info("EventController.getAllUserEvents userId ->{}", userId);
         List<EventResponseDto> events = eventService.getAllEventsForUser(userId);
         log.info("EventController.getAllUserEvents events.size ->{}", events.size());
-        ResponseWrapper<List<EventResponseDto>> response = new ResponseWrapper<>(
-                events,
-                SUCCESSFULLY_FETCHED,
-                true
-        );
+        ResponseWrapper<List<EventResponseDto>> response = ResponseWrapper.success(events, SUCCESSFULLY_FETCHED);
 
         return ResponseEntity.ok(response);
     }
@@ -137,11 +111,7 @@ public class EventController {
     public ResponseEntity<ResponseWrapper<EventDetailsWithAttendeeCountResponseDto>> getEventWithAttendees(@PathVariable UUID eventId) {
         log.info("EventController.getEventWithAttendees eventId ->{}", eventId);
         EventDetailsWithAttendeeCountResponseDto eventWithAttendeeCount = eventService.getEventWithAttendeeCount(eventId);
-        ResponseWrapper<EventDetailsWithAttendeeCountResponseDto> response = new ResponseWrapper<>(
-                eventWithAttendeeCount,
-                SUCCESSFULLY_FETCHED,
-                true
-        );
+        ResponseWrapper<EventDetailsWithAttendeeCountResponseDto> response = ResponseWrapper.success(eventWithAttendeeCount, SUCCESSFULLY_FETCHED);
 
         return ResponseEntity.ok(response);
     }

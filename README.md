@@ -66,7 +66,7 @@ Design and implement a production-ready RESTful API for an Event Management Plat
 
 * `POST /api/v1/events`: Create an event (Authenticated users only)
 * `PUT /api/v1/events/{id}`: Update event (Only host or admin)
-* `PATCH /api/v1/events/{id}`: Delete event (Only host or admin)
+* `DELETE /api/v1/events/{id}`: Delete event (Only host or admin)
 * `GET /api/v1/events`: List events with filters (date, location, visibility)
 * `GET /api/v1/events/upcoming`: List upcoming events (paginated)
 * `GET /api/v1/events/{id}/status`: Get event status

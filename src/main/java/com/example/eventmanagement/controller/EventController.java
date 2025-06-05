@@ -7,6 +7,7 @@ import com.example.eventmanagement.dto.response.EventResponseDto;
 import com.example.eventmanagement.dto.response.EventDetailsWithAttendeeCountResponseDto;
 import com.example.eventmanagement.dto.response.ResponseWrapper;
 import com.example.eventmanagement.enumeration.EventStatus;
+import com.example.eventmanagement.enumeration.Visibility;
 import com.example.eventmanagement.service.EventService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -35,21 +36,23 @@ public class EventController {
     @GetMapping
     public ResponseEntity<ResponseWrapper<List<EventResponseDto>>> getEventsWithFiltering(
             @RequestParam(required = false) String location,
-            @RequestParam(required = false) String visibility,
+            @RequestParam(required = false) Visibility visibility,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
     ) {
-        EventFilterRequestDto filter = new EventFilterRequestDto(date, visibility, location);
+        log.info("EventController.getEventsWithFiltering req-> location {}, visibility {}, date {}", location , null!=visibility?visibility.toString():null, date);
+        EventFilterRequestDto filter = new EventFilterRequestDto(date, null!=visibility?visibility.toString():null, location);
         List<EventResponseDto> result = eventService.getEventsWithFiltering(filter);
 
         ResponseWrapper<List<EventResponseDto>> response = ResponseWrapper.success(result,  SUCCESSFULLY_FETCHED);
+        log.info("EventController.getEventsWithFiltering res-> success");
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
     @PostMapping
     public ResponseEntity<ResponseWrapper<String>> createEvent(@RequestBody @Valid EventCreateRequestDto requestDto) {
-        log.info("EventController.createEvent req->{}", requestDto.toString());
+        log.info("EventController.createEvent req-> title {}, description {}", requestDto.getTitle(), requestDto.getDescription());
         EventResponseDto responseDto = eventService.saveEvent(requestDto);
-        log.info("EventController.createEvent res->{}", responseDto.toString());
+        log.info("EventController.createEvent res->id {}", responseDto.getId());
         ResponseWrapper<String> response = ResponseWrapper.success(null,  SUCCESSFULLY_CREATED_AN_EVENT+responseDto.getId());
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -68,7 +71,7 @@ public class EventController {
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
-    @PatchMapping("/{eventId}")
+    @DeleteMapping("/{eventId}")
     @PreAuthorize("hasRole('ADMIN') or @eventSecurity.isHost(#eventId, principal)")
     public ResponseEntity<ResponseWrapper<String>> deleteEvent(
             @PathVariable UUID eventId) {
@@ -85,7 +88,9 @@ public class EventController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         log.info("EventController.getUpcomingEvents page ->{}, size ->{}", page, size);
-        return ResponseEntity.ok(ResponseWrapper.success(eventService.listUpcomingEvents(page, size), SUCCESSFULLY_FETCHED));
+        Page<EventResponseDto> eventResponseDtos = eventService.listUpcomingEvents(page, size);
+        log.info("EventController.getUpcomingEvents tot elements ->{}", eventResponseDtos.getTotalElements());
+        return ResponseEntity.ok(ResponseWrapper.success(eventResponseDtos, SUCCESSFULLY_FETCHED));
     }
 
     @GetMapping("/{eventId}/status")
@@ -112,7 +117,7 @@ public class EventController {
         log.info("EventController.getEventWithAttendees eventId ->{}", eventId);
         EventDetailsWithAttendeeCountResponseDto eventWithAttendeeCount = eventService.getEventWithAttendeeCount(eventId);
         ResponseWrapper<EventDetailsWithAttendeeCountResponseDto> response = ResponseWrapper.success(eventWithAttendeeCount, SUCCESSFULLY_FETCHED);
-
+        log.info("EventController.getEventWithAttendees res -> eventId {}, title {}, description {}", eventId, eventWithAttendeeCount.getTitle(), eventWithAttendeeCount.getDescription());
         return ResponseEntity.ok(response);
     }
 

@@ -137,7 +137,7 @@ class EventControllerTest {
         requestDto.setStartTime(ZonedDateTime.now().plusDays(1));
         requestDto.setEndTime(ZonedDateTime.now().plusDays(2));
         requestDto.setLocation("Virtual");
-        requestDto.setVisibility("PUBLIC");
+        requestDto.setVisibility(Visibility.PUBLIC);
 
         MvcResult mvcResult = mockMvc.perform(post("/api/v1/events")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -160,7 +160,6 @@ class EventControllerTest {
         requestDto.setStartTime(null);  // Invalid
         requestDto.setEndTime(null);  // Invalid
         requestDto.setLocation("");  // Invalid
-        requestDto.setVisibility("UNKNOWN");  // Invalid enum string
 
         // Act & Assert
         MvcResult mvcResult = mockMvc.perform(post("/api/v1/events")
@@ -176,16 +175,13 @@ class EventControllerTest {
 
         // Deserialize to get nested "errors" list
         Map<String, Object> responseWrapper = objectMapper.readValue(jsonResponse, new TypeReference<>() {});
-        Map<String, Object> data = (Map<String, Object>) responseWrapper.get("data");
+        List<String> errors = (List<String>) responseWrapper.get("data");
 
-        assertThat(data).isNotNull();  // 🔒 ensure it's not null
-
-        List<String> errors = (List<String>) data.get("errors");
+        assertThat(errors).isNotNull();  // 🔒 ensure it's not null
 
         // Assert individual validation messages
-        assertThat(errors).contains(
+        assertThat(errors).hasSize(6).contains(
                 "location is required",
-                "visibility must be PUBLIC or PRIVATE",
                 "startTime is required",
                 "endTime is required",
                 "description is required",
@@ -203,7 +199,7 @@ class EventControllerTest {
         requestDto.setStartTime(ZonedDateTime.now().plusDays(1));
         requestDto.setEndTime(ZonedDateTime.now().plusDays(2));
         requestDto.setLocation("Virtual");
-        requestDto.setVisibility("PUBLIC");
+        requestDto.setVisibility(Visibility.PUBLIC);
 
         mockMvc.perform(post("/api/v1/events")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -221,7 +217,7 @@ class EventControllerTest {
         dto.setStartTime(ZonedDateTime.now().plusDays(3));
         dto.setEndTime(ZonedDateTime.now().plusDays(4));
         dto.setLocation("Google Meet");
-        dto.setVisibility("PUBLIC");
+        dto.setVisibility(Visibility.PUBLIC);
 
         MvcResult mvcResult = mockMvc.perform(put("/api/v1/events/" + eventId)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -243,7 +239,7 @@ class EventControllerTest {
         dto.setStartTime(ZonedDateTime.now().plusDays(3));
         dto.setEndTime(ZonedDateTime.now().plusDays(4));
         dto.setLocation("Google Meet");
-        dto.setVisibility("PUBLIC");
+        dto.setVisibility(Visibility.PUBLIC);
 
         MvcResult mvcResult = mockMvc.perform(put("/api/v1/events/" + eventId)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -265,7 +261,7 @@ class EventControllerTest {
         dto.setStartTime(ZonedDateTime.now().plusDays(3));
         dto.setEndTime(ZonedDateTime.now().plusDays(4));
         dto.setLocation("Google Meet");
-        dto.setVisibility("PUBLIC");
+        dto.setVisibility(Visibility.PUBLIC);
 
         mockMvc.perform(put("/api/v1/events/" + eventId)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -281,7 +277,7 @@ class EventControllerTest {
     @WithMockJwtUser(username = "lakshika1@gmail.com", roles = {"USER"})
     void deleteEvent_asHost_shouldSucceed() throws Exception {
 
-        MvcResult mvcResult = mockMvc.perform(patch("/api/v1/events/" + eventId))
+        MvcResult mvcResult = mockMvc.perform(delete("/api/v1/events/" + eventId))
                 .andExpect(status().isOk())
                 .andReturn();
 
@@ -299,7 +295,7 @@ class EventControllerTest {
     @Test
     @WithMockUser(username = "lakshika1@gmail.com", roles = "ADMIN")
     void deleteEvent_asRoleAdmin_shouldSucceed() throws Exception {
-        MvcResult mvcResult = mockMvc.perform(patch("/api/v1/events/" + eventId))
+        MvcResult mvcResult = mockMvc.perform(delete("/api/v1/events/" + eventId))
                 .andExpect(status().isOk())
                 .andReturn();
 
@@ -317,7 +313,7 @@ class EventControllerTest {
     @Test
     @WithMockJwtUser(username = "lakshika2@gmail.com", roles = {"USER"})
     void deleteEvent_asRoleUser_shouldForbidden() throws Exception {
-        mockMvc.perform(patch("/api/v1/events/" + eventId))
+        mockMvc.perform(delete("/api/v1/events/" + eventId))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.errorCode").value("ACCESS_DENIED"))
                 .andExpect(jsonPath("$.message").value(Matchers.containsString("You don't have permission to access this resource")))

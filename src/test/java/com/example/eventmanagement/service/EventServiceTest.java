@@ -122,7 +122,7 @@ class EventServiceTest {
         eventCreateRequestDto.setUserId(userId);
         eventCreateRequestDto.setLocation("Glkissa");
         eventCreateRequestDto.setTitle("asendra Birth day party at december 30,2025");
-        eventCreateRequestDto.setVisibility(Visibility.PUBLIC.toString());
+        eventCreateRequestDto.setVisibility(Visibility.PUBLIC);
         eventCreateRequestDto.setStartTime(ZonedDateTime.of(LocalDate.of(2025,12,30), LocalTime.of(12,0,0), ZoneId.of("UTC")));
         eventCreateRequestDto.setEndTime(ZonedDateTime.of(LocalDate.of(2025,12,30), LocalTime.of(16,0,0), ZoneId.of("UTC")));
         EventResponseDto eventResponseDto = eventService.saveEvent(eventCreateRequestDto);

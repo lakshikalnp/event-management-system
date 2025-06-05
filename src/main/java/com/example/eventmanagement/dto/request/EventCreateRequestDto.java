@@ -1,4 +1,5 @@
 package com.example.eventmanagement.dto.request;
+import com.example.eventmanagement.enumeration.Visibility;
 import jakarta.validation.constraints.*;
 import lombok.*;
 
@@ -33,7 +34,5 @@ public class EventCreateRequestDto {
     @NotBlank(message = "is required")
     private String location;
 
-    @NotBlank(message = "is required")
-    @Pattern(regexp = "PUBLIC|PRIVATE", flags = Pattern.Flag.CASE_INSENSITIVE, message = "must be PUBLIC or PRIVATE")
-    private String visibility;
+    private Visibility visibility;
 }

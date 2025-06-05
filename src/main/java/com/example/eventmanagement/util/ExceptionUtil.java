@@ -6,6 +6,7 @@ import org.springframework.http.ResponseEntity;
 
 public class ExceptionUtil {
 
+    private ExceptionUtil () {}
     public static <T> ResponseEntity<ResponseWrapper<T>> buildError(HttpStatus status, String code, String message) {
         return ResponseEntity.status(status).body(ResponseWrapper.failure(null, code, message));
     }

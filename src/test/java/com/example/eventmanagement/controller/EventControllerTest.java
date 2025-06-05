@@ -177,7 +177,6 @@ class EventControllerTest {
         Map<String, Object> responseWrapper = objectMapper.readValue(jsonResponse, new TypeReference<>() {});
         List<String> errors = (List<String>) responseWrapper.get("data");
 
-        assertThat(errors).isNotNull();  // 🔒 ensure it's not null
 
         // Assert individual validation messages
         assertThat(errors).hasSize(6).contains(

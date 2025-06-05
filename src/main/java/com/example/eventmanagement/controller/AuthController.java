@@ -4,6 +4,7 @@ import com.example.eventmanagement.dto.request.AuthRequestDto;
 import com.example.eventmanagement.entity.User;
 import com.example.eventmanagement.service.UserService;
 import com.example.eventmanagement.security.JwtUtil;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -25,7 +26,7 @@ public class AuthController {
     private final UserService userService;
 
     @PostMapping("/login")
-    public ResponseEntity<Map<String,String>> authenticate(@RequestBody AuthRequestDto request) {
+    public ResponseEntity<Map<String,String>> authenticate(@RequestBody @Valid AuthRequestDto request) {
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
         );

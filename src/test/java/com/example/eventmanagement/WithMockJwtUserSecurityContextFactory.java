@@ -23,11 +23,8 @@ public class WithMockJwtUserSecurityContextFactory implements WithSecurityContex
                 .map(SimpleGrantedAuthority::new)
                 .collect(Collectors.toList());
 
-        List<GrantedAuthority> grantedAuthorities = authorities;
         UsernamePasswordAuthenticationToken authToken =
-                new UsernamePasswordAuthenticationToken(user, null, grantedAuthorities);
-
-//                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                new UsernamePasswordAuthenticationToken(user, null, authorities);
         SecurityContextHolder.getContext().setAuthentication(authToken);
         return SecurityContextHolder.getContext();
     }

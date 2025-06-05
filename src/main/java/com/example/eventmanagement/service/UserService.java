@@ -28,7 +28,7 @@ public class UserService implements UserDetailsService {
 
 
     public User getUserByEmail(String email) {
-        return (User) userRepository.findByEmail(email).orElse(null);
+        return userRepository.findByEmail(email).orElse(null);
     }
 
     @Override

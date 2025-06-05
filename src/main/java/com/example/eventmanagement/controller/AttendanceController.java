@@ -23,7 +23,7 @@ public class AttendanceController {
 
     @PostMapping
     public ResponseEntity<ResponseWrapper<String>> recordAttendance(@RequestBody AttendanceRequestDto request) {
-        log.info("AttendanceController.recordAttendance req->{}", request.toString());
+        log.info("AttendanceController.recordAttendance req ->{}", request.toString());
         AttendanceResponseDto attendanceResponseDto = attendanceService.saveAttendance(request);
         String responseMessage = "Attendance successfully added with userId: " +
                 attendanceResponseDto.getUserId() + " eventId: " +

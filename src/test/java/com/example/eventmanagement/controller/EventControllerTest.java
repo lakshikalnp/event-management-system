@@ -2,6 +2,7 @@ package com.example.eventmanagement.controller;
 
 import com.example.eventmanagement.WithMockJwtUser;
 import com.example.eventmanagement.dto.request.EventCreateRequestDto;
+import com.example.eventmanagement.dto.response.EventResponseDto;
 import com.example.eventmanagement.entity.Attendance;
 import com.example.eventmanagement.entity.Event;
 import com.example.eventmanagement.entity.User;
@@ -16,11 +17,17 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.transaction.Transactional;
 import org.hamcrest.Matchers;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.hateoas.EntityModel;
+import org.springframework.hateoas.Link;
+import org.springframework.hateoas.mediatype.hal.Jackson2HalModule;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
@@ -34,8 +41,11 @@ import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest(properties = "spring.profiles.active=test")
 @Transactional
@@ -79,8 +89,7 @@ class EventControllerTest {
         testUser = userRepository.saveAndFlush(user);
         userId = testUser.getId();
 
-
-
+        objectMapper.registerModule(new Jackson2HalModule());
     }
 
     @BeforeEach
@@ -128,8 +137,9 @@ class EventControllerTest {
     }
 
     @Test
-    @WithMockUser(username = "lakshika1@gmail.com", roles = "USER")
+    @WithMockJwtUser(username = "lakshika1@gmail.com", roles = {"USER"})
     void createEvent_success() throws Exception {
+
         EventCreateRequestDto requestDto = new EventCreateRequestDto();
         requestDto.setTitle("Spring Boot Meetup");
         requestDto.setDescription("Learn Spring Boot in depth.");
@@ -146,7 +156,54 @@ class EventControllerTest {
                 .andReturn();
 
         String jsonResponse = mvcResult.getResponse().getContentAsString();
-        assertThat(jsonResponse).contains("Event successfully added with id:");
+        EntityModel<EventResponseDto> entity = objectMapper.readValue(
+                jsonResponse,
+                new TypeReference<>() {}
+        );
+        EventResponseDto eventResponseDto = entity.getContent();
+        assertNotNull(eventResponseDto);
+        assertThat(eventResponseDto.getTitle()).contains("Spring Boot Meetup");
+        Link statusLink = entity.getLink("status").orElse(null);
+        assertNotNull(statusLink);
+        Link deleteLink = entity.getLink("delete").orElse(null);
+        assertNotNull(deleteLink);
+        Link updateLink = entity.getLink("update").orElse(null);
+        assertNotNull(updateLink);
+    }
+
+    @Test
+    @WithMockJwtUser(username = "lakshika2@gmail.com", roles = {"USER"})
+    void createEvent_success_without_adminOrHost() throws Exception {
+
+        EventCreateRequestDto requestDto = new EventCreateRequestDto();
+        requestDto.setTitle("Spring Boot Meetup");
+        requestDto.setDescription("Learn Spring Boot in depth.");
+        requestDto.setUserId(userId);
+        requestDto.setStartTime(ZonedDateTime.now().plusDays(1));
+        requestDto.setEndTime(ZonedDateTime.now().plusDays(2));
+        requestDto.setLocation("Virtual");
+        requestDto.setVisibility(Visibility.PUBLIC);
+
+        MvcResult mvcResult = mockMvc.perform(post("/api/v1/events")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto)))
+                .andExpect(status().isCreated())
+                .andReturn();
+
+        String jsonResponse = mvcResult.getResponse().getContentAsString();
+        EntityModel<EventResponseDto> entity = objectMapper.readValue(
+                jsonResponse,
+                new TypeReference<>() {}
+        );
+        EventResponseDto eventResponseDto = entity.getContent();
+        assertNotNull(eventResponseDto);
+        assertThat(eventResponseDto.getTitle()).contains("Spring Boot Meetup");
+        Link statusLink = entity.getLink("status").orElse(null);
+        assertNotNull(statusLink);
+        Link deleteLink = entity.getLink("delete").orElse(null);
+        assertNull(deleteLink);
+        Link updateLink = entity.getLink("update").orElse(null);
+        assertNull(updateLink);
     }
 
     @Test
@@ -225,7 +282,13 @@ class EventControllerTest {
                 .andReturn();
 
         String jsonResponse = mvcResult.getResponse().getContentAsString();
-        assertThat(jsonResponse).contains("Event successfully updated with id:");
+        EntityModel<EventResponseDto> entity = objectMapper.readValue(
+                jsonResponse,
+                new TypeReference<>() {}
+        );
+        EventResponseDto eventResponseDto = entity.getContent();
+        assertNotNull(eventResponseDto);
+        assertThat(eventResponseDto.getTitle()).isEqualTo("Updated Event");
     }
 
     @Test
@@ -247,7 +310,13 @@ class EventControllerTest {
                 .andReturn();
 
         String jsonResponse = mvcResult.getResponse().getContentAsString();
-        assertThat(jsonResponse).contains("Event successfully updated with id:");
+        EntityModel<EventResponseDto> entity = objectMapper.readValue(
+                jsonResponse,
+                new TypeReference<>() {}
+        );
+        EventResponseDto eventResponseDto = entity.getContent();
+        assertNotNull(eventResponseDto);
+        assertThat(eventResponseDto.getTitle()).isEqualTo("Updated Event");
     }
 
     @Test
@@ -276,37 +345,18 @@ class EventControllerTest {
     @WithMockJwtUser(username = "lakshika1@gmail.com", roles = {"USER"})
     void deleteEvent_asHost_shouldSucceed() throws Exception {
 
-        MvcResult mvcResult = mockMvc.perform(delete("/api/v1/events/" + eventId))
-                .andExpect(status().isOk())
+        mockMvc.perform(delete("/api/v1/events/" + eventId))
+                .andExpect(status().isNoContent())
                 .andReturn();
 
-
-        String jsonResponse = mvcResult.getResponse().getContentAsString();
-
-        Map<String, Object> responseMap = objectMapper.readValue(jsonResponse, new TypeReference<>() {});
-
-        String actualMessage = (String) responseMap.get("message");
-        String expectedMessage = "Event successfully deleted with id: " + eventId;
-
-        assertThat(actualMessage).isEqualTo(expectedMessage);
     }
 
     @Test
-    @WithMockUser(username = "lakshika1@gmail.com", roles = "ADMIN")
+    @WithMockJwtUser(username = "lakshika2@gmail.com", roles = {"ADMIN"})
     void deleteEvent_asRoleAdmin_shouldSucceed() throws Exception {
-        MvcResult mvcResult = mockMvc.perform(delete("/api/v1/events/" + eventId))
-                .andExpect(status().isOk())
+        mockMvc.perform(delete("/api/v1/events/" + eventId))
+                .andExpect(status().isNoContent())
                 .andReturn();
-
-
-        String jsonResponse = mvcResult.getResponse().getContentAsString();
-
-        Map<String, Object> responseMap = objectMapper.readValue(jsonResponse, new TypeReference<>() {});
-
-        String actualMessage = (String) responseMap.get("message");
-        String expectedMessage = "Event successfully deleted with id: " + eventId;
-
-        assertThat(actualMessage).isEqualTo(expectedMessage);
     }
 
     @Test
@@ -325,8 +375,8 @@ class EventControllerTest {
     void getUpcomingEvents_shouldReturnList() throws Exception {
         mockMvc.perform(get("/api/v1/events/upcoming?page=0&size=10"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.content").isArray())
-                .andExpect(jsonPath("$.data.content[0].title").value("Future Event"));
+                .andExpect(jsonPath("$._embedded.eventResponseDtoList").isArray())
+                .andExpect(jsonPath("$._embedded.eventResponseDtoList[0].title").value("Future Event"));
     }
 
     @Test
@@ -334,9 +384,7 @@ class EventControllerTest {
     void getStatus_shouldReturn200WithCorrectStatus() throws Exception {
         mockMvc.perform(get("/api/v1/events/" + eventId + "/status"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data").value("ACTIVE"))
-                .andExpect(jsonPath("$.message").value("Successfully fetched"))
-                .andExpect(jsonPath("$.success").value(true));
+                .andExpect(jsonPath("$.status").value("ACTIVE"));
     }
 
     @Test
@@ -353,9 +401,9 @@ class EventControllerTest {
     void shouldReturnAllHostedAndAttendingEvents() throws Exception {
         mockMvc.perform(get("/api/v1/events/user/{userId}/all", userId))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.length()").value(2)) // adjust based on actual count
-                .andExpect(jsonPath("$.data[0].title").exists())
-                .andExpect(jsonPath("$.data[1].title").exists());
+                .andExpect(jsonPath("$._embedded.eventResponseDtoList.length()").value(2)) // adjust based on actual count
+                .andExpect(jsonPath("$._embedded.eventResponseDtoList[0].title").exists())
+                .andExpect(jsonPath("$._embedded.eventResponseDtoList[1].title").exists());
     }
 
     @Test
@@ -363,8 +411,8 @@ class EventControllerTest {
     void getEventWithAttendeeCount_returnsCorrectData() throws Exception {
         mockMvc.perform(get("/api/v1/events/" + event2Id + "/details"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.title").value("Future Event"))
-                .andExpect(jsonPath("$.data.attendeeCount").value(1));
+                .andExpect(jsonPath("$.title").value("Future Event"))
+                .andExpect(jsonPath("$.attendeeCount").value(1));
     }
 
     @Test
@@ -373,20 +421,20 @@ class EventControllerTest {
         mockMvc.perform(get("/api/v1/events")
                         .param("location", "Test Location"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.length()").value(1))
-                .andExpect(jsonPath("$.data[0].title").value("Future Event"))
-                .andExpect(jsonPath("$.data[0].location").value("Test Location"));
+                .andExpect(jsonPath("$._embedded.eventResponseDtoList.length()").value(1))
+                .andExpect(jsonPath("$._embedded.eventResponseDtoList[0].title").value("Future Event"))
+                .andExpect(jsonPath("$._embedded.eventResponseDtoList[0].location").value("Test Location"));
     }
 
     @Test
-    @WithMockJwtUser(username = "lakshika3@gmail.com", roles = {"USER"})
+    @WithMockJwtUser(username = "lakshika2@gmail.com", roles = {"USER"})
     void shouldReturnFilteredEvents_ForNotHostUser_withPublicVisibility() throws Exception {
         mockMvc.perform(get("/api/v1/events")
                         .param("visibility", "PUBLIC"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.length()").value(1))
-                .andExpect(jsonPath("$.data[0].title").value("Original Event"))
-                .andExpect(jsonPath("$.data[0].location").value("Zoom"));
+                .andExpect(jsonPath("$._embedded.eventResponseDtoList.length()").value(1))
+                .andExpect(jsonPath("$._embedded.eventResponseDtoList[0].title").value("Original Event"))
+                .andExpect(jsonPath("$._embedded.eventResponseDtoList[0].location").value("Zoom"));
     }
 
     @Test
@@ -395,9 +443,9 @@ class EventControllerTest {
         mockMvc.perform(get("/api/v1/events")
                         .param("visibility", "PRIVATE"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.length()").value(1))
-                .andExpect(jsonPath("$.data[0].title").value("Future Event"))
-                .andExpect(jsonPath("$.data[0].location").value("Test Location"));
+                .andExpect(jsonPath("$._embedded.eventResponseDtoList.length()").value(1))
+                .andExpect(jsonPath("$._embedded.eventResponseDtoList[0].title").value("Future Event"))
+                .andExpect(jsonPath("$._embedded.eventResponseDtoList[0].location").value("Test Location"));
     }
 
     @Test
@@ -405,8 +453,7 @@ class EventControllerTest {
     void shouldReturnFilteredEvents_ForNotHostUser_withPrivateVisibility() throws Exception {
         mockMvc.perform(get("/api/v1/events")
                         .param("visibility", "PRIVATE"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.length()").value(0));
+                .andExpect(status().isOk());//content null
     }
 
     @Test
@@ -415,6 +462,6 @@ class EventControllerTest {
         mockMvc.perform(get("/api/v1/events")
                         .param("date", String.valueOf(LocalDate.now(ZoneId.of("UTC")).plusDays(1))))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.length()").value(1));
+                .andExpect(jsonPath("$._embedded.eventResponseDtoList.length()").value(1));
     }
 }

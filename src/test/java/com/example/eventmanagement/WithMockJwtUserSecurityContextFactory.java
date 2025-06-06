@@ -12,12 +12,14 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class WithMockJwtUserSecurityContextFactory implements WithSecurityContextFactory<WithMockJwtUser> {
+
     @Override
     public SecurityContext createSecurityContext(WithMockJwtUser annotation) {
         String username = annotation.username();
         String[] roles = annotation.roles();
         User user = new User();
         user.setEmail(username);
+
         List<GrantedAuthority> authorities = Arrays.stream(roles)
                 .map(role -> "ROLE_" + role)
                 .map(SimpleGrantedAuthority::new)

@@ -10,6 +10,7 @@ The application is named `event-management-system` and uses PostgreSQL for persi
 - **Rate Limiting:** Limits each user/IP to 50 requests per minute to prevent abuse.
 - **caffeine cache:** to improve the performance.
 - **security key loads from .env file:** to avoid key leakage.
+- **HATEOAS Applied to event controller
 
 ## Default Users Initialization
 During application startup, two default users are automatically created for testing and development purposes.
@@ -31,7 +32,7 @@ Predefined Users:
 
 ## Objective
 
-Design and implement a production-ready RESTful API for an Event Management Platform. The system allows users to manage events and attendance with secure access, robust filtering capabilities, and performance optimization. It emphasizes scalability, clean architecture, and best practices.
+Design and implement a production-ready RESFull API for an Event Management Platform. The system allows users to manage events and attendance with secure access, robust filtering capabilities, and performance optimization. It emphasizes scalability, clean architecture, and best practices.
 
 ## Core Requirements
 
@@ -92,6 +93,6 @@ Design and implement a production-ready RESTful API for an Event Management Plat
 ## Testing
 
 - Unit Testing: JUnit 5
-- Integration Testing: H2 database (or Testcontainers)
+- Integration Testing: H2 database
 - Authentication Simulation: `@WithMockUser`, `@WithSecurityContext`
 - Code Coverage: Ensure high coverage on services and controllers

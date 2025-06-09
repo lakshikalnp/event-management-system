@@ -10,7 +10,7 @@ The application is named `event-management-system` and uses PostgreSQL for persi
 - **Rate Limiting:** Limits each user/IP to 50 requests per minute to prevent abuse.
 - **caffeine cache:** to improve the performance.
 - **security key loads from .env file:** to avoid key leakage.
-- **HATEOAS Applied to event controller
+- **HATEOAS:** Applied to event controller
 
 ## Default Users Initialization
 During application startup, two default users are automatically created for testing and development purposes.

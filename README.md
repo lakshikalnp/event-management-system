@@ -144,3 +144,7 @@ The following diagram illustrates the complete architecture of the Notification 
 - Integration Testing: H2 database
 - Authentication Simulation: `@WithMockUser`, `@WithSecurityContext`
 - Code Coverage: Ensure high coverage on services and controllers
+
+## Author
+
+Lakshika Perera | Built with Spring Boot

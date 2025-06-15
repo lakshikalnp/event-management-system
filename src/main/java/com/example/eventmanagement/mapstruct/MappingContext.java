@@ -1,6 +1,7 @@
 package com.example.eventmanagement.mapstruct;
 
 import com.example.eventmanagement.dto.request.EventCreateRequestDto;
+import com.example.eventmanagement.dto.request.FailedMessageRequestDto;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
@@ -19,7 +20,9 @@ public class MappingContext {
             if (strategy instanceof EventCreateRequestDtoToEventStrategy) {
                 strategyMap.put(EventCreateRequestDto.class, strategy);
             }
-            // Add others here: User, Attendance, etc.
+            if (strategy instanceof FailedMsgDtoToEventStrategy) {
+                strategyMap.put(FailedMessageRequestDto.class, strategy);
+            }
         });
     }
 

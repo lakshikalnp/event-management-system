@@ -12,6 +12,6 @@ public class EventCreateRequestDtoToEventStrategy implements MappingStrategy<Eve
 
     @Override
     public Event map(EventCreateRequestDto source) {
-        return eventMapper.toEvent(source);
+        return eventMapper.toEntity(source);
     }
 }

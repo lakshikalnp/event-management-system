@@ -6,6 +6,7 @@ import com.example.eventmanagement.dto.request.EventUpdateRequestDto;
 import com.example.eventmanagement.dto.response.*;
 import com.example.eventmanagement.enumeration.EventStatus;
 import com.example.eventmanagement.enumeration.Visibility;
+//import com.example.eventmanagement.rabbitmq.EventProducer;
 import com.example.eventmanagement.service.EventService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +21,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
@@ -36,6 +38,9 @@ public class EventController {
     private final EventService eventService;
     private final EventDetailsModelAssembler eventDetailsModelAssembler;
     private final EventModelAssembler eventModelAssembler;
+
+//    private final EventProducer eventProducer;
+
 
     @GetMapping
     public ResponseEntity<CollectionModel<EntityModel<EventResponseDto>>> getEventsWithFiltering(
@@ -61,7 +66,7 @@ public class EventController {
     }
 
     @PostMapping
-    public ResponseEntity<EntityModel<EventResponseDto>> createEvent(@RequestBody @Valid EventCreateRequestDto requestDto) {
+    public ResponseEntity<EntityModel<EventResponseDto>> createEvent(@RequestBody @Valid EventCreateRequestDto requestDto) throws IOException {
 
         log.info("EventController.createEvent req-> title {}, description {}", requestDto.getTitle(), requestDto.getDescription());
 

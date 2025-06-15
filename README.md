@@ -81,6 +81,54 @@ Design and implement a production-ready RESFull API for an Event Management Plat
 - Rate Limiting / Throttling (per user/IP)
 - Soft Deletes for Events (archiving instead of hard delete)
 
+## Retry, DLQ, and DB Fallback Enhancement
+
+This enhancement introduces a robust message retry and fallback mechanism to ensure high availability and fault tolerance for notification delivery.
+
+---
+
+### Key Improvements
+
+#### Circuit Breaker Integration
+
+- Applied to RabbitMQ message sending.
+- Uses Resilience4j.
+- Triggers fallback after 3 failed attempts.
+
+#### Retry Logic
+
+- Retries up to `maxRetryAttempts` (e.g., 3) in-memory.
+- Circuit breaker fallback saves the message to DB and attempts DLQ delivery.
+
+#### Dead Letter Queue (DLQ)
+
+- Messages that fail after 3 attempts are sent to `notification.dlq-queue`.
+- DLQ is configured with a TTL (Time-To-Live).
+- After TTL expiry, the message is re-routed to the main queue for re-processing.
+
+#### DB Fallback (Failed Message Table)
+
+- If DLQ delivery fails, the message is saved to PostgreSQL for scheduled reprocessing.
+- Table: `failed_message`.
+
+#### Scheduled Retry of DB-Persisted Failures
+
+- A `@Scheduled` job runs every 2 hrs.
+- Scans the `failed_message` table and republishes unsent messages to the DLQ then
+DLQ auto-forward those messages to the main 'notification.queue' those messages will consumed
+by notification micro service and process those to send emails.
+
+
+
+## Notification Service Architecture
+
+The following diagram illustrates the complete architecture of the Notification Service, showing how it interacts with RabbitMQ, PostgreSQL, and external services.
+
+![Notification Architecture](images/event-architecture.png)
+
+> The retry logic (Resilience4j Circuit Breaker) is visualized with "Try → Failure → Retry max 3x → DLQ/DB".
+
+
 ## Tech Stack
 
 - Java 17

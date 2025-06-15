@@ -3,18 +3,26 @@ package com.example.eventmanagement.service;
 import com.example.eventmanagement.dto.request.EventCreateRequestDto;
 import com.example.eventmanagement.dto.request.EventFilterRequestDto;
 import com.example.eventmanagement.dto.request.EventUpdateRequestDto;
+import com.example.eventmanagement.dto.response.EventCreatedNotificationResponseDto;
 import com.example.eventmanagement.dto.response.EventResponseDto;
 import com.example.eventmanagement.dto.response.EventDetailsWithAttendeeCountResponseDto;
 import com.example.eventmanagement.entity.Event;
 import com.example.eventmanagement.enumeration.EventStatus;
+import com.example.eventmanagement.enumeration.EventType;
+import com.example.eventmanagement.enumeration.NotificationType;
 import com.example.eventmanagement.exception.ResourceNotFoundException;
 import com.example.eventmanagement.mapstruct.MappingContext;
+import com.example.eventmanagement.rabbitmq.EventProducer;
 import com.example.eventmanagement.repository.AttendanceRepository;
 import com.example.eventmanagement.repository.EventRepository;
 import com.example.eventmanagement.specification.EventSpecification;
+import com.example.eventmanagement.util.AppConstants;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.amqp.core.Message;
+import org.springframework.amqp.core.MessageBuilder;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
@@ -25,6 +33,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.*;
@@ -40,9 +49,11 @@ public class EventService {
     private final MappingContext mappingContext;
     private final EventRepository eventRepository;
     private final AttendanceRepository attendanceRepository;
+    private final EventProducer eventProducer;
+    private final ObjectMapper objectMapper;
 
     @CacheEvict(value = "upcomingEvents", allEntries = true)
-    public EventResponseDto saveEvent(EventCreateRequestDto eventCreateRequestDto) {
+    public EventResponseDto saveEvent(EventCreateRequestDto eventCreateRequestDto) throws IOException {
         log.info("saveEvent called");
         Event event = mappingContext
                 .getStrategy(EventCreateRequestDto.class, Event.class)
@@ -51,8 +62,42 @@ public class EventService {
         event = eventRepository.saveAndFlush(event);
 
         log.info("Event added successfully");
+
+//        eventProducer.sendEvent(getCreateEventNotificationTemplate(event, "templates/create-event-email.html"), "An event created");
+        Message msg = MessageBuilder.withBody(objectMapper.writeValueAsBytes(EventCreatedNotificationResponseDto.eventToDto(event)))
+                .setHeader("eventType", EventType.AN_EVENT_CREATED.name())
+                .setHeader("notificationType", NotificationType.EMAIL.name())
+                .setHeader("title","an_event_created")
+                .setHeader(AppConstants.X_RETRY_COUNT, 0)
+                .build();
+        try {
+            eventProducer.sendEvent(msg);
+        } catch (Exception e) {
+           log.error("Error Occurred while sending notification ", e);
+        }
+
+
         return EventResponseDto.eventToDto(event);
     }
+
+//    private static String getCreateEventNotificationTemplate(Event event, String tempalteName) throws IOException {
+//        // create notification template
+//        // Define formatter with pattern yyyy-MM-dd HH:mm z
+//        DateTimeFormatter formatter =
+//                DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm z", Locale.getDefault());
+//        String template = Files.readString(Path.of(tempalteName));
+//        return template
+//                .replace("${event.status}", event.getStatus().name())
+//                .replace("${event.host.name}", event.getHost().getName())
+//                .replace("${event.id}", event.getId().toString())
+//                .replace("${event.title}", event.getTitle())
+//                .replace("${event.description}", event.getDescription())
+//                .replace("${event.host.email}", event.getHost().getEmail())
+//                .replace("${event.startTime}", formatter.format(event.getStartTime()))
+//                .replace("${event.endTime}", formatter.format(event.getEndTime()))
+//                .replace("${event.location}", event.getLocation())
+//                .replace("${event.visibility}", event.getVisibility().name());
+//    }
 
 
     @CachePut(value = "upcomingEvents", key = "#eventId")

@@ -4,6 +4,8 @@ import java.time.format.DateTimeFormatter;
 
 public class AppConstants {
 
+    public static final String X_RETRY_COUNT = "x-retry-count";
+
     private AppConstants() {}
 
     // General constants

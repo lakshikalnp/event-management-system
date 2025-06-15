@@ -22,6 +22,7 @@ import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabas
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.Page;
 
+import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZoneId;
@@ -113,7 +114,7 @@ class EventServiceTest {
     }
 
     @Test
-    void testSaveAndFindEvent() {
+    void testSaveAndFindEvent() throws IOException {
        userRepository.findById(userId);
 
         // Create and save eventCreateRequestDto
